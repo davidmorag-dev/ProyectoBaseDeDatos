@@ -1,0 +1,7 @@
+-- SUC03 (ejecutar solo en SUC03)
+
+-- CLIENTE
+INSERT INTO CLIENTE VALUES (3, 1, 'CEDULA', '606660666', 'Jorge Castro Perez', 1, SYSDATE);
+INSERT INTO CLIENTE VALUES (3, 2, 'CEDULA', '707770777', 'Laura Solis Vega', 1, SYSDATE);
+
+COMMIT;

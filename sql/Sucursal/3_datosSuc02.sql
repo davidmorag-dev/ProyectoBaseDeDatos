@@ -1,0 +1,8 @@
+-- SUC02 (ejecutar solo en SUC02)
+
+-- CLIENTE
+INSERT INTO CLIENTE VALUES (2, 1, 'CEDULA', '101110111', 'Maria Rojas Mora', 1, SYSDATE); -- duplicado: tambien esta en SUC01
+INSERT INTO CLIENTE VALUES (2, 2, 'CEDULA', '404440444', 'Luis Araya Brenes', 1, SYSDATE);
+INSERT INTO CLIENTE VALUES (2, 3, 'CEDULA', '505550555', 'Sofia Mora Leon', 1, SYSDATE);
+
+COMMIT;
