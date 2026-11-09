@@ -1,104 +1,126 @@
--- SUCURSAL
+-- Ejecutar una vez en CENTRAL, SUC01, SUC02 y SUC03.
+-- Los cuatro nodos comparten la misma estructura; solo cambian sus datos.
+
 CREATE TABLE SUCURSAL (
     idSucursal NUMBER(3) PRIMARY KEY,
     codigoSucursal VARCHAR2(10) NOT NULL UNIQUE,
     nombreSucursal VARCHAR2(60) NOT NULL,
-    estadoConexionSucursal VARCHAR2(10) NOT NULL CHECK (estadoConexionSucursal IN ('CONECTADA', 'DIFERIDA')),
-    fechaUltimaSincronizacionSucursal DATE);
+    modoSyncSucursal VARCHAR2(10) NOT NULL
+        CHECK (modoSyncSucursal IN ('CONECTADO', 'DIFERIDO')),
+    estadoConexionSucursal VARCHAR2(12) NOT NULL
+        CHECK (estadoConexionSucursal IN ('CONECTADA', 'SIN_CONEXION')),
+    fechaUltimaSyncSucursal TIMESTAMP
+);
 
--- PRODUCTO
 CREATE TABLE PRODUCTO (
     idProducto NUMBER(10) PRIMARY KEY,
-    nombreProducto VARCHAR2(80) NOT NULL,
-    precioActualProducto NUMBER(12,2) NOT NULL,
-    fechaModificacionProducto DATE NOT NULL);
+    codigoProducto VARCHAR2(30) NOT NULL UNIQUE,
+    descripcionProducto VARCHAR2(200) NOT NULL,
+    precioActualProducto NUMBER(12,2) NOT NULL
+        CHECK (precioActualProducto >= 0),
+    fechaModificacionProducto TIMESTAMP NOT NULL
+);
 
--- CLIENTE
 CREATE TABLE CLIENTE (
-    idSucursalOrigen NUMBER(3) NOT NULL REFERENCES SUCURSAL (idSucursal),
+    idSucursalOrigen NUMBER(3) NOT NULL,
     idClienteLocal NUMBER(10) NOT NULL,
     tipoIdentificacionCliente VARCHAR2(10) NOT NULL,
-    numeroIdentificacionCliente VARCHAR2(20) NOT NULL,
-    nombreCliente VARCHAR2(80) NOT NULL,
-    versionCliente NUMBER(6) DEFAULT 1 NOT NULL,
-    fechaModificacionCliente DATE NOT NULL,
-    PRIMARY KEY (idSucursalOrigen, idClienteLocal));
+    numeroIdentificacionCliente VARCHAR2(30) NOT NULL,
+    nombreCliente VARCHAR2(120) NOT NULL,
+    versionCliente NUMBER(10) DEFAULT 1 NOT NULL
+        CHECK (versionCliente >= 1),
+    fechaModificacionCliente TIMESTAMP NOT NULL,
+    PRIMARY KEY (idSucursalOrigen, idClienteLocal),
+    FOREIGN KEY (idSucursalOrigen) REFERENCES SUCURSAL (idSucursal)
+);
 
--- CLIENTE_EQUIVALENCIA
 CREATE TABLE CLIENTE_EQUIVALENCIA (
-    idSucursalDuplicado NUMBER(3) NOT NULL,
-    idClienteDuplicado NUMBER(10) NOT NULL,
-    idSucursalCanonico NUMBER(3) NOT NULL,
+    idSucursalOrigen NUMBER(3) NOT NULL,
+    idClienteLocal NUMBER(10) NOT NULL,
+    idSucursalCanonica NUMBER(3) NOT NULL,
     idClienteCanonico NUMBER(10) NOT NULL,
-    fechaDeteccionEquivalencia DATE NOT NULL,
-    PRIMARY KEY (idSucursalDuplicado, idClienteDuplicado),
-    FOREIGN KEY (idSucursalDuplicado, idClienteDuplicado) REFERENCES CLIENTE (idSucursalOrigen, idClienteLocal),
-    FOREIGN KEY (idSucursalCanonico, idClienteCanonico) REFERENCES CLIENTE (idSucursalOrigen, idClienteLocal));
+    fechaDeteccionEquivalencia TIMESTAMP NOT NULL,
+    PRIMARY KEY (idSucursalOrigen, idClienteLocal),
+    FOREIGN KEY (idSucursalOrigen, idClienteLocal)
+        REFERENCES CLIENTE (idSucursalOrigen, idClienteLocal),
+    FOREIGN KEY (idSucursalCanonica, idClienteCanonico)
+        REFERENCES CLIENTE (idSucursalOrigen, idClienteLocal)
+);
 
--- RANGO_FACTURA
 CREATE TABLE RANGO_FACTURA (
     idRango NUMBER(10) PRIMARY KEY,
-    idSucursal NUMBER(3) NOT NULL REFERENCES SUCURSAL (idSucursal),
+    idSucursal NUMBER(3) NOT NULL,
     numeroInicialRango NUMBER(12) NOT NULL,
     numeroFinalRango NUMBER(12) NOT NULL,
     proximoNumeroRango NUMBER(12) NOT NULL,
-    estadoRango VARCHAR2(10) NOT NULL CHECK (estadoRango IN ('ACTIVO', 'AGOTADO', 'RETIRADO')));
+    estadoRango VARCHAR2(10) NOT NULL
+        CHECK (estadoRango IN ('ACTIVO', 'AGOTADO', 'RETIRADO')),
+    FOREIGN KEY (idSucursal) REFERENCES SUCURSAL (idSucursal),
+    CHECK (numeroInicialRango > 0),
+    CHECK (numeroFinalRango >= numeroInicialRango),
+    CHECK (proximoNumeroRango BETWEEN numeroInicialRango AND numeroFinalRango + 1)
+);
 
--- FACTURA
 CREATE TABLE FACTURA (
     idFactura NUMBER(12) PRIMARY KEY,
-    idSucursalEmisora NUMBER(3) NOT NULL REFERENCES SUCURSAL (idSucursal),
-    idSucursalOrigen NUMBER(3) NOT NULL,
+    idSucursalEmisora NUMBER(3) NOT NULL,
+    idSucursalCliente NUMBER(3) NOT NULL,
     idClienteLocal NUMBER(10) NOT NULL,
-    fechaEmisionFactura DATE NOT NULL,
-    totalFactura NUMBER(12,2) NOT NULL,
-    FOREIGN KEY (idSucursalOrigen, idClienteLocal) REFERENCES CLIENTE (idSucursalOrigen, idClienteLocal));
+    fechaEmisionFactura TIMESTAMP NOT NULL,
+    totalFactura NUMBER(14,2) NOT NULL
+        CHECK (totalFactura >= 0),
+    FOREIGN KEY (idSucursalEmisora) REFERENCES SUCURSAL (idSucursal),
+    FOREIGN KEY (idSucursalCliente, idClienteLocal)
+        REFERENCES CLIENTE (idSucursalOrigen, idClienteLocal)
+);
 
--- DETALLE_FACTURA
 CREATE TABLE DETALLE_FACTURA (
-    idFactura NUMBER(12) NOT NULL REFERENCES FACTURA (idFactura),
-    numeroLineaDetalle NUMBER(4) NOT NULL,
-    idProducto NUMBER(10) NOT NULL REFERENCES PRODUCTO (idProducto),
-    cantidadDetalle NUMBER(8) NOT NULL,
-    precioUnitarioDetalle NUMBER(12,2) NOT NULL,
-    PRIMARY KEY (idFactura, numeroLineaDetalle));
+    idFactura NUMBER(12) NOT NULL,
+    lineaDetalle NUMBER(4) NOT NULL,
+    idProducto NUMBER(10) NOT NULL,
+    cantidadDetalle NUMBER(10,2) NOT NULL
+        CHECK (cantidadDetalle > 0),
+    precioUnitarioDetalle NUMBER(12,2) NOT NULL
+        CHECK (precioUnitarioDetalle >= 0),
+    PRIMARY KEY (idFactura, lineaDetalle),
+    FOREIGN KEY (idFactura) REFERENCES FACTURA (idFactura),
+    FOREIGN KEY (idProducto) REFERENCES PRODUCTO (idProducto)
+);
 
--- SYNC_SALIDA
 CREATE TABLE SYNC_SALIDA (
     idSalida NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-    tipoRegistroSalida VARCHAR2(20) NOT NULL,
-    llaveRegistroSalida VARCHAR2(40) NOT NULL,
-    destinoSalida VARCHAR2(10) NOT NULL,
-    estadoSalida VARCHAR2(10) NOT NULL CHECK (estadoSalida IN ('PENDIENTE', 'ENVIADO', 'APLICADO')),
-    fechaCreacionSalida DATE NOT NULL,
-    fechaEnvioSalida DATE);
+    tablaOrigenSalida VARCHAR2(30) NOT NULL,
+    claveRegistroSalida VARCHAR2(60) NOT NULL,
+    destinoSalida VARCHAR2(10) NOT NULL
+        CHECK (destinoSalida IN ('CENTRAL', 'SUC01', 'SUC02', 'SUC03')),
+    versionSalida NUMBER(10) NOT NULL
+        CHECK (versionSalida >= 1),
+    estadoSalida VARCHAR2(10) NOT NULL
+        CHECK (estadoSalida IN ('PENDIENTE', 'ENVIADO', 'APLICADO')),
+    fechaCreacionSalida TIMESTAMP NOT NULL,
+    fechaEnvioSalida TIMESTAMP,
+    fechaAplicacionSalida TIMESTAMP
+);
 
--- SYNC_RECIBIDO
 CREATE TABLE SYNC_RECIBIDO (
     idRecibido NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
     origenRecibido VARCHAR2(10) NOT NULL,
     idEnvioRecibido NUMBER NOT NULL,
-    fechaAplicacionRecibido DATE NOT NULL,
-    UNIQUE (origenRecibido, idEnvioRecibido));
+    huellaRecibido VARCHAR2(64) NOT NULL,
+    fechaRecepcionRecibido TIMESTAMP NOT NULL,
+    resultadoRecibido VARCHAR2(10) NOT NULL
+        CHECK (resultadoRecibido IN ('APLICADO', 'DESCARTADO')),
+    UNIQUE (origenRecibido, idEnvioRecibido)
+);
 
--- BITACORA_SYNC
 CREATE TABLE BITACORA_SYNC (
     idBitacora NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-    fechaBitacora DATE NOT NULL,
-    nodoOrigenBitacora VARCHAR2(10) NOT NULL,
-    nodoDestinoBitacora VARCHAR2(10) NOT NULL,
-    resultadoBitacora VARCHAR2(10) NOT NULL CHECK (resultadoBitacora IN ('OK', 'ERROR')),
-    cantidadRegistrosBitacora NUMBER(8) NOT NULL,
-    detalleBitacora VARCHAR2(300));
-
---DROPS
-DROP TABLE BITACORA_SYNC;
-DROP TABLE SYNC_RECIBIDO;
-DROP TABLE SYNC_SALIDA;
-DROP TABLE DETALLE_FACTURA;
-DROP TABLE FACTURA;
-DROP TABLE RANGO_FACTURA;
-DROP TABLE CLIENTE_EQUIVALENCIA;
-DROP TABLE CLIENTE;
-DROP TABLE PRODUCTO;
-DROP TABLE SUCURSAL;
+    contraparteBitacora VARCHAR2(10) NOT NULL,
+    direccionBitacora VARCHAR2(10) NOT NULL
+        CHECK (direccionBitacora IN ('SUBIDA', 'BAJADA', 'LOTE_GEN', 'LOTE_APL')),
+    tablaAfectadaBitacora VARCHAR2(30) NOT NULL,
+    fechaInicioBitacora TIMESTAMP NOT NULL,
+    fechaFinBitacora TIMESTAMP NOT NULL,
+    resultadoBitacora VARCHAR2(10) NOT NULL
+        CHECK (resultadoBitacora IN ('OK', 'ERROR', 'DESCARTADO', 'OMITIDO'))
+);
