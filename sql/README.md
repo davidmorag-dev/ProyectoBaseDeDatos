@@ -14,6 +14,7 @@
 4. En cada sucursal: su propio `Sucursal/3_datosSucXX.sql`, que carga solo su bloque, sus clientes y los envios pendientes hacia CENTRAL.
 5. En cada sucursal: `Sucursal/4_facturarVenta.sql` y `Sucursal/5_sincronizarSucursal.sql`.
 6. En CENTRAL: `Central/4_configurarEnlaces.sql`, cuando SUC01 y SUC02 ya tengan Oracle accesible por red. El script pide sus IP, usuarios y claves; no guardar claves en Git.
+   Para mostrar el estado de las dos conexiones antes y despues de sincronizar, ejecutar `Central/4b_verificarConexiones.sql` en CENTRAL. Se puede repetir; SUC03 aparece como modo correo.
 7. En CENTRAL: `Central/5_sincronizarCentral.sql`.
 
 Cada script de datos se ejecuta una sola vez en una base recien creada.
