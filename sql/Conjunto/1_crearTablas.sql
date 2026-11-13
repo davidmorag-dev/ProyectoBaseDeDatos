@@ -9,16 +9,15 @@ CREATE TABLE SUCURSAL (
         CHECK (modoSyncSucursal IN ('CONECTADO', 'DIFERIDO')),
     estadoConexionSucursal VARCHAR2(12) NOT NULL
         CHECK (estadoConexionSucursal IN ('CONECTADA', 'SIN_CONEXION')),
-    fechaUltimaSyncSucursal TIMESTAMP
+    fechaUltimaSyncSucursal DATE
 );
 
 CREATE TABLE PRODUCTO (
     idProducto NUMBER(10) PRIMARY KEY,
-    codigoProducto VARCHAR2(30) NOT NULL UNIQUE,
     descripcionProducto VARCHAR2(200) NOT NULL,
     precioActualProducto NUMBER(12,2) NOT NULL
         CHECK (precioActualProducto >= 0),
-    fechaModificacionProducto TIMESTAMP NOT NULL
+    fechaModificacionProducto DATE NOT NULL
 );
 
 CREATE TABLE CLIENTE (
@@ -29,7 +28,7 @@ CREATE TABLE CLIENTE (
     nombreCliente VARCHAR2(120) NOT NULL,
     versionCliente NUMBER(10) DEFAULT 1 NOT NULL
         CHECK (versionCliente >= 1),
-    fechaModificacionCliente TIMESTAMP NOT NULL,
+    fechaModificacionCliente DATE NOT NULL,
     PRIMARY KEY (idSucursalOrigen, idClienteLocal),
     FOREIGN KEY (idSucursalOrigen) REFERENCES SUCURSAL (idSucursal)
 );
@@ -39,7 +38,7 @@ CREATE TABLE CLIENTE_EQUIVALENCIA (
     idClienteLocal NUMBER(10) NOT NULL,
     idSucursalCanonica NUMBER(3) NOT NULL,
     idClienteCanonico NUMBER(10) NOT NULL,
-    fechaDeteccionEquivalencia TIMESTAMP NOT NULL,
+    fechaDeteccionEquivalencia DATE NOT NULL,
     PRIMARY KEY (idSucursalOrigen, idClienteLocal),
     FOREIGN KEY (idSucursalOrigen, idClienteLocal)
         REFERENCES CLIENTE (idSucursalOrigen, idClienteLocal),
@@ -66,7 +65,7 @@ CREATE TABLE FACTURA (
     idSucursalEmisora NUMBER(3) NOT NULL,
     idSucursalCliente NUMBER(3) NOT NULL,
     idClienteLocal NUMBER(10) NOT NULL,
-    fechaEmisionFactura TIMESTAMP NOT NULL,
+    fechaEmisionFactura DATE NOT NULL,
     totalFactura NUMBER(14,2) NOT NULL
         CHECK (totalFactura >= 0),
     FOREIGN KEY (idSucursalEmisora) REFERENCES SUCURSAL (idSucursal),
@@ -97,9 +96,9 @@ CREATE TABLE SYNC_SALIDA (
         CHECK (versionSalida >= 1),
     estadoSalida VARCHAR2(10) NOT NULL
         CHECK (estadoSalida IN ('PENDIENTE', 'ENVIADO', 'APLICADO')),
-    fechaCreacionSalida TIMESTAMP NOT NULL,
-    fechaEnvioSalida TIMESTAMP,
-    fechaAplicacionSalida TIMESTAMP
+    fechaCreacionSalida DATE NOT NULL,
+    fechaEnvioSalida DATE,
+    fechaAplicacionSalida DATE
 );
 
 CREATE TABLE SYNC_RECIBIDO (
@@ -107,7 +106,7 @@ CREATE TABLE SYNC_RECIBIDO (
     origenRecibido VARCHAR2(10) NOT NULL,
     idEnvioRecibido NUMBER NOT NULL,
     huellaRecibido VARCHAR2(64) NOT NULL,
-    fechaRecepcionRecibido TIMESTAMP NOT NULL,
+    fechaRecepcionRecibido DATE NOT NULL,
     resultadoRecibido VARCHAR2(10) NOT NULL
         CHECK (resultadoRecibido IN ('APLICADO', 'DESCARTADO')),
     UNIQUE (origenRecibido, idEnvioRecibido)
@@ -119,8 +118,8 @@ CREATE TABLE BITACORA_SYNC (
     direccionBitacora VARCHAR2(10) NOT NULL
         CHECK (direccionBitacora IN ('SUBIDA', 'BAJADA', 'LOTE_GEN', 'LOTE_APL')),
     tablaAfectadaBitacora VARCHAR2(30) NOT NULL,
-    fechaInicioBitacora TIMESTAMP NOT NULL,
-    fechaFinBitacora TIMESTAMP NOT NULL,
+    fechaInicioBitacora DATE NOT NULL,
+    fechaFinBitacora DATE NOT NULL,
     resultadoBitacora VARCHAR2(10) NOT NULL
         CHECK (resultadoBitacora IN ('OK', 'ERROR', 'DESCARTADO', 'OMITIDO'))
 );

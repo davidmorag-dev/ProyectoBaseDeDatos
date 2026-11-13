@@ -30,7 +30,7 @@ BEGIN
             numeroIdentificacionCliente = pNumeroIdentificacion,
             nombreCliente = pNombre,
             versionCliente = versionActual,
-            fechaModificacionCliente = SYSTIMESTAMP
+            fechaModificacionCliente = SYSDATE
         WHERE idSucursalOrigen = pIdSucursal
           AND idClienteLocal = pIdClienteLocal;
     EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -41,7 +41,7 @@ BEGIN
             fechaModificacionCliente
         ) VALUES (
             pIdSucursal, pIdClienteLocal, pTipoIdentificacion,
-            pNumeroIdentificacion, pNombre, versionActual, SYSTIMESTAMP
+            pNumeroIdentificacion, pNombre, versionActual, SYSDATE
         );
     END;
 
@@ -50,7 +50,7 @@ BEGIN
         versionSalida, estadoSalida, fechaCreacionSalida
     ) VALUES (
         'CLIENTE', TO_CHAR(pIdSucursal) || ':' || TO_CHAR(pIdClienteLocal),
-        'CENTRAL', versionActual, 'PENDIENTE', SYSTIMESTAMP
+        'CENTRAL', versionActual, 'PENDIENTE', SYSDATE
     );
     COMMIT;
 EXCEPTION WHEN OTHERS THEN

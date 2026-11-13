@@ -1,0 +1,767 @@
+{
+  "version": 1,
+  "appType": "modeloFisico",
+  "tables": [
+    {
+      "id": "tbl_1",
+      "x": 420,
+      "y": 40,
+      "w": 330,
+      "name": "SUCURSAL",
+      "fields": [
+        {
+          "id": "f_1_1",
+          "name": "idSucursal",
+          "pk": true,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_1_2",
+          "name": "codigoSucursal",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "10",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_1_3",
+          "name": "nombreSucursal",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "60",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_1_4",
+          "name": "modoSyncSucursal",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "10",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_1_5",
+          "name": "estadoConexionSucursal",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "12",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_1_6",
+          "name": "fechaUltimaSyncSucursal",
+          "pk": false,
+          "fk": false,
+          "tipo": "DATE",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "id": "tbl_2",
+      "x": 1180,
+      "y": 40,
+      "w": 330,
+      "name": "PRODUCTO",
+      "fields": [
+        {
+          "id": "f_2_1",
+          "name": "idProducto",
+          "pk": true,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_2_2",
+          "name": "descripcionProducto",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "200",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_2_3",
+          "name": "precioActualProducto",
+          "pk": false,
+          "fk": false,
+          "tipo": "DECIMAL",
+          "longitud": "12,2",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_2_4",
+          "name": "fechaModificacionProducto",
+          "pk": false,
+          "fk": false,
+          "tipo": "DATE",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "id": "tbl_3",
+      "x": 40,
+      "y": 327,
+      "w": 330,
+      "name": "CLIENTE",
+      "fields": [
+        {
+          "id": "f_3_1",
+          "name": "idSucursalOrigen",
+          "pk": true,
+          "fk": true,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_3_2",
+          "name": "idClienteLocal",
+          "pk": true,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_3_3",
+          "name": "tipoIdentificacionCliente",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "10",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_3_4",
+          "name": "numeroIdentificacionCliente",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "30",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_3_5",
+          "name": "nombreCliente",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "120",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_3_6",
+          "name": "versionCliente",
+          "pk": false,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_3_7",
+          "name": "fechaModificacionCliente",
+          "pk": false,
+          "fk": false,
+          "tipo": "DATE",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "id": "tbl_4",
+      "x": 40,
+      "y": 614,
+      "w": 330,
+      "name": "CLIENTE_EQUIVALENCIA",
+      "fields": [
+        {
+          "id": "f_4_1",
+          "name": "idSucursalOrigen",
+          "pk": true,
+          "fk": true,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_4_2",
+          "name": "idClienteLocal",
+          "pk": true,
+          "fk": true,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_4_3",
+          "name": "idSucursalCanonica",
+          "pk": false,
+          "fk": true,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_4_4",
+          "name": "idClienteCanonico",
+          "pk": false,
+          "fk": true,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_4_5",
+          "name": "fechaDeteccionEquivalencia",
+          "pk": false,
+          "fk": false,
+          "tipo": "DATE",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "id": "tbl_5",
+      "x": 800,
+      "y": 40,
+      "w": 330,
+      "name": "RANGO_FACTURA",
+      "fields": [
+        {
+          "id": "f_5_1",
+          "name": "idRango",
+          "pk": true,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_5_2",
+          "name": "idSucursal",
+          "pk": false,
+          "fk": true,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_5_3",
+          "name": "numeroInicialRango",
+          "pk": false,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_5_4",
+          "name": "numeroFinalRango",
+          "pk": false,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_5_5",
+          "name": "proximoNumeroRango",
+          "pk": false,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_5_6",
+          "name": "estadoRango",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "10",
+          "notNull": true,
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "id": "tbl_6",
+      "x": 420,
+      "y": 327,
+      "w": 330,
+      "name": "FACTURA",
+      "fields": [
+        {
+          "id": "f_6_1",
+          "name": "idFactura",
+          "pk": true,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_6_2",
+          "name": "idSucursalEmisora",
+          "pk": false,
+          "fk": true,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_6_3",
+          "name": "idSucursalCliente",
+          "pk": false,
+          "fk": true,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_6_4",
+          "name": "idClienteLocal",
+          "pk": false,
+          "fk": true,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_6_5",
+          "name": "fechaEmisionFactura",
+          "pk": false,
+          "fk": false,
+          "tipo": "DATE",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_6_6",
+          "name": "totalFactura",
+          "pk": false,
+          "fk": false,
+          "tipo": "DECIMAL",
+          "longitud": "14,2",
+          "notNull": true,
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "id": "tbl_7",
+      "x": 800,
+      "y": 327,
+      "w": 330,
+      "name": "DETALLE_FACTURA",
+      "fields": [
+        {
+          "id": "f_7_1",
+          "name": "idFactura",
+          "pk": true,
+          "fk": true,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_7_2",
+          "name": "lineaDetalle",
+          "pk": true,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_7_3",
+          "name": "idProducto",
+          "pk": false,
+          "fk": true,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_7_4",
+          "name": "cantidadDetalle",
+          "pk": false,
+          "fk": false,
+          "tipo": "DECIMAL",
+          "longitud": "10,2",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_7_5",
+          "name": "precioUnitarioDetalle",
+          "pk": false,
+          "fk": false,
+          "tipo": "DECIMAL",
+          "longitud": "12,2",
+          "notNull": true,
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "id": "tbl_8",
+      "x": 420,
+      "y": 614,
+      "w": 330,
+      "name": "SYNC_SALIDA",
+      "fields": [
+        {
+          "id": "f_8_1",
+          "name": "idSalida",
+          "pk": true,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_8_2",
+          "name": "tablaOrigenSalida",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "30",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_8_3",
+          "name": "claveRegistroSalida",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "60",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_8_4",
+          "name": "destinoSalida",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "10",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_8_5",
+          "name": "versionSalida",
+          "pk": false,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_8_6",
+          "name": "estadoSalida",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "10",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_8_7",
+          "name": "fechaCreacionSalida",
+          "pk": false,
+          "fk": false,
+          "tipo": "DATE",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_8_8",
+          "name": "fechaEnvioSalida",
+          "pk": false,
+          "fk": false,
+          "tipo": "DATE",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_8_9",
+          "name": "fechaAplicacionSalida",
+          "pk": false,
+          "fk": false,
+          "tipo": "DATE",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "id": "tbl_9",
+      "x": 800,
+      "y": 614,
+      "w": 330,
+      "name": "SYNC_RECIBIDO",
+      "fields": [
+        {
+          "id": "f_9_1",
+          "name": "idRecibido",
+          "pk": true,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_9_2",
+          "name": "origenRecibido",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "10",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_9_3",
+          "name": "idEnvioRecibido",
+          "pk": false,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_9_4",
+          "name": "huellaRecibido",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "64",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_9_5",
+          "name": "fechaRecepcionRecibido",
+          "pk": false,
+          "fk": false,
+          "tipo": "DATE",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_9_6",
+          "name": "resultadoRecibido",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "10",
+          "notNull": true,
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "id": "tbl_10",
+      "x": 40,
+      "y": 40,
+      "w": 330,
+      "name": "BITACORA_SYNC",
+      "fields": [
+        {
+          "id": "f_10_1",
+          "name": "idBitacora",
+          "pk": true,
+          "fk": false,
+          "tipo": "INT",
+          "longitud": "",
+          "notNull": false,
+          "defecto": ""
+        },
+        {
+          "id": "f_10_2",
+          "name": "contraparteBitacora",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "10",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_10_3",
+          "name": "direccionBitacora",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "10",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_10_4",
+          "name": "tablaAfectadaBitacora",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "30",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_10_5",
+          "name": "fechaInicioBitacora",
+          "pk": false,
+          "fk": false,
+          "tipo": "DATE",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_10_6",
+          "name": "fechaFinBitacora",
+          "pk": false,
+          "fk": false,
+          "tipo": "DATE",
+          "longitud": "",
+          "notNull": true,
+          "defecto": ""
+        },
+        {
+          "id": "f_10_7",
+          "name": "resultadoBitacora",
+          "pk": false,
+          "fk": false,
+          "tipo": "VARCHAR",
+          "longitud": "10",
+          "notNull": true,
+          "defecto": ""
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_1",
+      "src": "tbl_1",
+      "dst": "tbl_5",
+      "relType": "1N",
+      "fieldName": "idSucursal"
+    },
+    {
+      "id": "rel_2",
+      "src": "tbl_6",
+      "dst": "tbl_7",
+      "relType": "1N",
+      "fieldName": "idFactura"
+    },
+    {
+      "id": "rel_3",
+      "src": "tbl_2",
+      "dst": "tbl_7",
+      "relType": "1N",
+      "fieldName": "idProducto"
+    },
+    {
+      "id": "rel_4",
+      "src": "tbl_3",
+      "dst": "tbl_4",
+      "relType": "1N",
+      "fieldName": "idClienteLocal"
+    },
+    {
+      "id": "rel_5",
+      "src": "tbl_1",
+      "dst": "tbl_3",
+      "relType": "1N",
+      "fieldName": "idSucursalOrigen"
+    },
+    {
+      "id": "rel_6",
+      "src": "tbl_1",
+      "dst": "tbl_6",
+      "relType": "1N",
+      "fieldName": "idSucursalEmisora"
+    },
+    {
+      "id": "rel_7",
+      "src": "tbl_3",
+      "dst": "tbl_6",
+      "relType": "1N",
+      "fieldName": "idSucursalCliente, idClienteLocal"
+    },
+    {
+      "id": "rel_8",
+      "src": "tbl_3",
+      "dst": "tbl_4",
+      "relType": "1N",
+      "fieldName": "idSucursalCanonica, idClienteCanonico"
+    }
+  ],
+  "textNodes": [],
+  "tableCounter": 11,
+  "textCounter": 1
+}

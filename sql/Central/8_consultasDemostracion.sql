@@ -11,6 +11,16 @@ SELECT idSucursalEmisora, COUNT(*) AS cantidadFacturas,
        SUM(totalFactura) AS totalVendido
 FROM FACTURA GROUP BY idSucursalEmisora ORDER BY idSucursalEmisora;
 
+PROMPT === Ventas por sucursal en un periodo ===
+-- :desde y :hasta son fechas, por ejemplo DATE '2026-11-01' y DATE '2026-12-01'.
+SELECT s.codigoSucursal AS sucursal, COUNT(*) AS facturas,
+       SUM(f.totalFactura) AS totalVendido
+FROM FACTURA f
+JOIN SUCURSAL s ON s.idSucursal = f.idSucursalEmisora
+WHERE f.fechaEmisionFactura >= :desde AND f.fechaEmisionFactura < :hasta
+GROUP BY s.codigoSucursal
+ORDER BY s.codigoSucursal;
+
 PROMPT === Envios centrales pendientes ===
 SELECT destinoSalida, tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad
 FROM SYNC_SALIDA

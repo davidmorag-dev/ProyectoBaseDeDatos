@@ -21,7 +21,7 @@ BEGIN
             versionSalida, estadoSalida, fechaCreacionSalida
         ) VALUES (
             'RANGO_FACTURA', TO_CHAR(pIdSucursal), 'CENTRAL',
-            1, 'PENDIENTE', SYSTIMESTAMP
+            1, 'PENDIENTE', SYSDATE
         );
     END IF;
     COMMIT;
@@ -73,7 +73,7 @@ BEGIN
         idClienteLocal, fechaEmisionFactura, totalFactura
     ) VALUES (
         pIdFactura, pIdSucursal, pIdSucursalCliente,
-        pIdClienteLocal, SYSTIMESTAMP, 0
+        pIdClienteLocal, SYSDATE, 0
     );
 
     FOR lineaActual IN (
@@ -126,7 +126,7 @@ BEGIN
         versionSalida, estadoSalida, fechaCreacionSalida
     ) VALUES (
         'FACTURA', TO_CHAR(pIdFactura), 'CENTRAL',
-        1, 'PENDIENTE', SYSTIMESTAMP
+        1, 'PENDIENTE', SYSDATE
     );
 
     IF proximoNumeroActual - numeroInicialActual + 1 >=
@@ -144,7 +144,7 @@ BEGIN
                 versionSalida, estadoSalida, fechaCreacionSalida
             ) VALUES (
                 'RANGO_FACTURA', TO_CHAR(pIdSucursal), 'CENTRAL',
-                1, 'PENDIENTE', SYSTIMESTAMP
+                1, 'PENDIENTE', SYSDATE
             );
         END IF;
     END IF;
@@ -157,6 +157,25 @@ EXCEPTION
 END;
 /
 SHOW ERRORS PROCEDURE SP_EMITIR_FACTURA
+
+-- Despues de restaurar una copia antigua: retira el bloque activo
+-- y pide uno nuevo, para no repetir numeros que quiza ya se usaron.
+CREATE OR REPLACE PROCEDURE SP_RETIRAR_BLOQUE (
+    pIdSucursal IN NUMBER
+) AS
+BEGIN
+    UPDATE RANGO_FACTURA SET estadoRango = 'RETIRADO'
+    WHERE idSucursal = pIdSucursal
+      AND estadoRango = 'ACTIVO';
+    COMMIT;
+    SP_SOLICITAR_BLOQUE(pIdSucursal);
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END;
+/
+SHOW ERRORS PROCEDURE SP_RETIRAR_BLOQUE
 
 -- Ejemplo para ejecutar a demanda en SUC01:
 -- VARIABLE idFactura NUMBER

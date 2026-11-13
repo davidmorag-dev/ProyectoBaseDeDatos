@@ -16,6 +16,12 @@
 6. En CENTRAL: `Central/4_configurarEnlaces.sql`, cuando SUC01 y SUC02 ya tengan Oracle accesible por red. El script pide sus IP, usuarios y claves; no guardar claves en Git.
    Para mostrar el estado de las dos conexiones antes y despues de sincronizar, ejecutar `Central/4b_verificarConexiones.sql` en CENTRAL. Se puede repetir; SUC03 aparece como modo correo.
 7. En CENTRAL: `Central/5_sincronizarCentral.sql`.
+8. En CENTRAL: `Central/5b_programarSincronizacion.sql` crea los trabajos que ejecutan `SP_CICLO_SYNC` cada 5 minutos para SUC01 y SUC02.
+9. Modo por correo (SUC03). Un administrador crea antes la carpeta `DIR_SYNC` en SUC03 y en CENTRAL.
+   - En SUC03: `Sucursal/6_generarPaqueteCorreo.sql`; `EXEC SP_GENERAR_LOTE(FN_SIGUIENTE_LOTE);` escribe el archivo `lote_SUC03_0001.txt`.
+   - Ese archivo se envia por correo y se guarda en la carpeta `DIR_SYNC` de CENTRAL.
+   - En CENTRAL: `Central/6_aplicarPaqueteCorreo.sql`; `EXEC SP_PROCESAR_LOTE('lote_SUC03_0001.txt', 'SUC03');` verifica el lote y lo aplica.
+   - Falta el lote de respuesta de CENTRAL hacia SUC03.
 
 Cada script de datos se ejecuta una sola vez en una base recien creada.
 
