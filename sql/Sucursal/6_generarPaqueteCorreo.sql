@@ -76,6 +76,18 @@ END;
 /
 SHOW ERRORS FUNCTION FN_SIGUIENTE_LOTE
 
+-- STANDARD_HASH es una funcion de SQL: en PL/SQL hay que llamarla con un SELECT.
+CREATE OR REPLACE FUNCTION FN_HUELLA (
+    pTexto IN VARCHAR2
+) RETURN VARCHAR2 AS
+    huellaActual VARCHAR2(64);
+BEGIN
+    SELECT RAWTOHEX(STANDARD_HASH(pTexto, 'SHA256')) INTO huellaActual FROM DUAL;
+    RETURN huellaActual;
+END;
+/
+SHOW ERRORS FUNCTION FN_HUELLA
+
 -- Escribe el lote: encabezado, un envio por linea con su huella SHA-256 y los acuses.
 CREATE OR REPLACE PROCEDURE SP_GENERAR_LOTE (
     pNumeroLote IN NUMBER
@@ -106,7 +118,7 @@ BEGIN
         UTL_FILE.PUT_LINE(archivo, 'ENV|' || envio.idSalida || '|' ||
             envio.tablaOrigenSalida || '|' || envio.claveRegistroSalida || '|' ||
             envio.versionSalida || '|' || datosActuales || '|' ||
-            RAWTOHEX(STANDARD_HASH(datosActuales, 'SHA256')));
+            FN_HUELLA(datosActuales));
     END LOOP;
 
     FOR acuse IN (

@@ -17,6 +17,18 @@ END;
 /
 SHOW ERRORS FUNCTION FN_CAMPO
 
+-- STANDARD_HASH es una funcion de SQL: en PL/SQL hay que llamarla con un SELECT.
+CREATE OR REPLACE FUNCTION FN_HUELLA (
+    pTexto IN VARCHAR2
+) RETURN VARCHAR2 AS
+    huellaActual VARCHAR2(64);
+BEGIN
+    SELECT RAWTOHEX(STANDARD_HASH(pTexto, 'SHA256')) INTO huellaActual FROM DUAL;
+    RETURN huellaActual;
+END;
+/
+SHOW ERRORS FUNCTION FN_HUELLA
+
 -- Lee un lote enviado por una sucursal en modo diferido, comprueba que llego completo
 -- y sin alteraciones, y lo aplica en una sola transaccion.
 CREATE OR REPLACE PROCEDURE SP_PROCESAR_LOTE (
@@ -68,8 +80,7 @@ BEGIN
     FOR i IN 2 .. cantidadLineas LOOP
         IF FN_CAMPO(lineas(i), '\|', 1) = 'ENV' THEN
             cantidadEnvios := cantidadEnvios + 1;
-            IF RAWTOHEX(STANDARD_HASH(FN_CAMPO(lineas(i), '\|', 6), 'SHA256'))
-               <> FN_CAMPO(lineas(i), '\|', 7) THEN
+            IF FN_HUELLA(FN_CAMPO(lineas(i), '\|', 6)) <> FN_CAMPO(lineas(i), '\|', 7) THEN
                 RAISE_APPLICATION_ERROR(-20041, 'Huella distinta en el envio ' ||
                                         FN_CAMPO(lineas(i), '\|', 2));
             END IF;
