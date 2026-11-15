@@ -70,3 +70,35 @@ SELECT estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA WHERE destinoSalida =
 -- 16. Registro de lotes generados (LOTE_GEN debe salir OK)
 SELECT direccionBitacora, tablaAfectadaBitacora, fechaInicioBitacora, resultadoBitacora
 FROM BITACORA_SYNC ORDER BY idBitacora DESC FETCH FIRST 10 ROWS ONLY;
+
+
+-- RESPUESTA DE LA CENTRAL (despues de 7_aplicarRespuestaCorreo.sql)
+
+-- 17. Procedimientos de la respuesta (deben salir VALID)
+SELECT object_name, object_type, status FROM user_objects
+WHERE object_name IN ('FN_CAMPO', 'SP_PROCESAR_RESPUESTA') ORDER BY object_name;
+
+-- 18. Antes de aplicar: anotar estos conteos para comparar
+SELECT (SELECT COUNT(*) FROM CLIENTE) AS clientes,
+       (SELECT COUNT(*) FROM SYNC_RECIBIDO WHERE origenRecibido = 'CENTRAL') AS recibidosCentral,
+       (SELECT COUNT(*) FROM SYNC_SALIDA WHERE destinoSalida = 'CENTRAL' AND estadoSalida = 'APLICADO') AS enviosConfirmados
+FROM DUAL;
+
+-- 19. Aplicar la respuesta (el archivo debe estar en C:\sync; cambiar 0001 si es otro numero)
+EXEC SP_PROCESAR_RESPUESTA('respuesta_SUC03_0001.txt', 'SUC03');
+
+-- 20. Despues de aplicar: repetir 18 (suben los clientes de otras sucursales y los envios confirmados)
+SELECT (SELECT COUNT(*) FROM CLIENTE) AS clientes,
+       (SELECT COUNT(*) FROM SYNC_RECIBIDO WHERE origenRecibido = 'CENTRAL') AS recibidosCentral,
+       (SELECT COUNT(*) FROM SYNC_SALIDA WHERE destinoSalida = 'CENTRAL' AND estadoSalida = 'APLICADO') AS enviosConfirmados
+FROM DUAL;
+
+-- 21. Envios de la central recibidos y su resultado (APLICADO o DESCARTADO)
+SELECT idEnvioRecibido, fechaRecepcionRecibido, resultadoRecibido FROM SYNC_RECIBIDO
+WHERE origenRecibido = 'CENTRAL' ORDER BY idEnvioRecibido;
+
+-- 22. Precios actuales (comparar con CENTRAL si se cambio un precio)
+SELECT idProducto, precioActualProducto, fechaModificacionProducto FROM PRODUCTO ORDER BY idProducto;
+
+-- 23. Aplicar la misma respuesta otra vez y repetir 18: los conteos no deben cambiar
+EXEC SP_PROCESAR_RESPUESTA('respuesta_SUC03_0001.txt', 'SUC03');

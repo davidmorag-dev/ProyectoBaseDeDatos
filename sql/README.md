@@ -21,7 +21,9 @@
    - En SUC03: `Sucursal/6_generarPaqueteCorreo.sql`; `EXEC SP_GENERAR_LOTE(FN_SIGUIENTE_LOTE);` escribe el archivo `lote_SUC03_0001.txt`.
    - Ese archivo se envia por correo y se guarda en la carpeta `DIR_SYNC` de CENTRAL.
    - En CENTRAL: `Central/6_aplicarPaqueteCorreo.sql`; `EXEC SP_PROCESAR_LOTE('lote_SUC03_0001.txt', 'SUC03');` verifica el lote y lo aplica.
-   - Falta el lote de respuesta de CENTRAL hacia SUC03.
+   - En CENTRAL: `Central/7_generarRespuestaCorreo.sql`; `EXEC SP_GENERAR_RESPUESTA('SUC03', FN_SIGUIENTE_RESPUESTA('SUC03'));` escribe `respuesta_SUC03_0001.txt` con precios, clientes de otras sucursales, bloques nuevos y acuses. El trabajo `JOB_RESPUESTA_SUC03` la genera sola a las 9 p. m.
+   - Esa respuesta se envia por correo y se guarda en la carpeta `DIR_SYNC` de SUC03.
+   - En SUC03: `Sucursal/7_aplicarRespuestaCorreo.sql`; `EXEC SP_PROCESAR_RESPUESTA('respuesta_SUC03_0001.txt', 'SUC03');` la verifica y la aplica.
 
 Cada script de datos se ejecuta una sola vez en una base recien creada.
 
@@ -48,7 +50,7 @@ EXEC SP_CICLO_SYNC('SUC01');
 EXEC SP_CICLO_SYNC('SUC02');
 ```
 
-La central recoge clientes y facturas pendientes, entrega cambios del catalogo y bloques nuevos. `SP_CAMBIAR_PRECIO(1, 455000)` cambia el precio central y deja un envio pendiente para cada sucursal. SUC03 usa el modo diferido; su paquete por correo todavia no esta implementado. Estos procedimientos no se han ejecutado aun en las cuatro computadoras.
+La central recoge clientes y facturas pendientes, entrega cambios del catalogo y bloques nuevos. `SP_CAMBIAR_PRECIO(1, 455000)` cambia el precio central y deja un envio pendiente para cada sucursal. SUC03 usa el modo diferido: recibe lo mismo, pero en la respuesta por correo.
 
 Despues de ambos ciclos, `Central/8_consultasDemostracion.sql` muestra facturas, envios pendientes, clientes equivalentes y precios de los dos enlaces conectados.
 

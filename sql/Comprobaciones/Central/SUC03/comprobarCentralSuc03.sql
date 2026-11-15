@@ -102,8 +102,33 @@ SELECT (SELECT COUNT(*) FROM CLIENTE WHERE idSucursalOrigen = 3) AS clientesSuc0
 FROM DUAL;
 
 
--- PARTE E. LO QUE ESPERA VOLVER A SUC03
+-- PARTE E. LA RESPUESTA HACIA SUC03 (despues de 7_generarRespuestaCorreo.sql)
 
--- E1. Envios de la central hacia SUC03 (quedan PENDIENTE hasta que exista el lote de respuesta)
+-- E1. Procedimientos de la respuesta (todos deben salir VALID)
+SELECT object_name, object_type, status FROM user_objects
+WHERE object_name IN ('FN_SERIALIZAR', 'FN_SIGUIENTE_RESPUESTA', 'SP_GENERAR_RESPUESTA')
+ORDER BY object_name;
+
+-- E2. Trabajo que genera la respuesta a las 9 p. m. (JOB_RESPUESTA_SUC03, ENABLED = TRUE)
+SELECT job_name, enabled, state, next_run_date FROM user_scheduler_jobs WHERE job_name = 'JOB_RESPUESTA_SUC03';
+
+-- E3. Lo que va en la respuesta: envios de la central hacia SUC03
+SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA
+WHERE destinoSalida = 'SUC03' GROUP BY tablaOrigenSalida, estadoSalida;
+
+-- E4. Opcional: cambiar un precio para que la respuesta lleve un cambio del catalogo
+EXEC SP_CAMBIAR_PRECIO(1, 455000);
+
+-- E5. Numero que tendra la proxima respuesta
+SELECT FN_SIGUIENTE_RESPUESTA('SUC03') AS proximaRespuesta FROM DUAL;
+
+-- E6. Generar la respuesta (crea C:\sync\respuesta_SUC03_000N.txt; mandarla por correo a SUC03)
+EXEC SP_GENERAR_RESPUESTA('SUC03', FN_SIGUIENTE_RESPUESTA('SUC03'));
+
+-- E7. Despues de generar: los envios hacia SUC03 pasan a ENVIADO
+SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA
+WHERE destinoSalida = 'SUC03' GROUP BY tablaOrigenSalida, estadoSalida;
+
+-- E8. Cuando llegue el siguiente lote de SUC03 y se procese: los envios pasan a APLICADO
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA
 WHERE destinoSalida = 'SUC03' GROUP BY tablaOrigenSalida, estadoSalida;
