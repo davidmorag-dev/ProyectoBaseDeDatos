@@ -1,8 +1,8 @@
 -- Ejecutar solo en SUC03 (modo diferido), despues de 4_facturarVenta.sql.
--- Antes, como administrador de la base, crear la carpeta donde se guarda el lote:
+-- Antes, como SYSTEM:
 --   CREATE DIRECTORY DIR_SYNC AS 'C:\sync';
 --   GRANT READ, WRITE ON DIRECTORY DIR_SYNC TO SUC03;
--- Los nombres de clientes no deben llevar los simbolos | ni ~ ni #.
+-- Los nombres no deben llevar | ~ #
 
 CREATE OR REPLACE PROCEDURE SP_REGISTRAR_BITACORA (
     pContraparte IN VARCHAR2,
@@ -25,9 +25,7 @@ END;
 /
 SHOW ERRORS PROCEDURE SP_REGISTRAR_BITACORA
 
--- Convierte un registro pendiente en una linea de texto.
--- Cliente: tipo~numero~nombre~version~fecha
--- Factura: emisora~sucursalCliente~clienteLocal~fecha~total#linea~producto~cantidad~precio#...
+-- Convierte un registro en una linea de texto
 CREATE OR REPLACE FUNCTION FN_SERIALIZAR (
     pTabla IN VARCHAR2,
     pClave IN VARCHAR2
@@ -76,7 +74,6 @@ END;
 /
 SHOW ERRORS FUNCTION FN_SIGUIENTE_LOTE
 
--- STANDARD_HASH es una funcion de SQL: en PL/SQL hay que llamarla con un SELECT.
 CREATE OR REPLACE FUNCTION FN_HUELLA (
     pTexto IN VARCHAR2
 ) RETURN VARCHAR2 AS
@@ -88,7 +85,7 @@ END;
 /
 SHOW ERRORS FUNCTION FN_HUELLA
 
--- Escribe el lote: encabezado, un envio por linea con su huella SHA-256 y los acuses.
+-- Escribe el lote con sus envios y acuses
 CREATE OR REPLACE PROCEDURE SP_GENERAR_LOTE (
     pNumeroLote IN NUMBER
 ) AS
@@ -143,7 +140,7 @@ END;
 /
 SHOW ERRORS PROCEDURE SP_GENERAR_LOTE
 
--- Genera el lote solo, todos los dias a las 8 p. m.
+-- Genera el lote todos los dias a las 8 p. m.
 BEGIN
     DBMS_SCHEDULER.CREATE_JOB(
         job_name        => 'JOB_LOTE_SUC03',
@@ -154,5 +151,4 @@ BEGIN
 END;
 /
 
--- A demanda:
 -- EXEC SP_GENERAR_LOTE(FN_SIGUIENTE_LOTE);

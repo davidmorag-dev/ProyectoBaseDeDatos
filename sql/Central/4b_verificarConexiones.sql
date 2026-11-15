@@ -1,10 +1,7 @@
--- Ejecutar completo con F5 en CENTRAL.
--- Solo comprueba si cada enlace responde; no cambia datos.
+-- Ejecutar con F5 en CENTRAL. Solo prueba los enlaces.
 SET SERVEROUTPUT ON
 
--- ---------------------------------
--- 1. VERIFICAR SUC01
--- ---------------------------------
+-- 1. SUC01
 DECLARE
     respuesta NUMBER;
 BEGIN
@@ -16,9 +13,7 @@ EXCEPTION
 END;
 /
 
--- ---------------------------------
--- 2. VERIFICAR SUC02
--- ---------------------------------
+-- 2. SUC02
 DECLARE
     respuesta NUMBER;
 BEGIN
@@ -30,7 +25,5 @@ EXCEPTION
 END;
 /
 
--- ---------------------------------
--- 3. SUC03 NO USA ENLACE DIRECTO
--- ---------------------------------
+-- 3. SUC03 (por correo, sin enlace)
 PROMPT SUC03: CORREO (sin enlace directo)

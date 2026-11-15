@@ -1,5 +1,4 @@
--- Ejecutar en CENTRAL despues de configurar los enlaces y correr ambos ciclos.
--- Son consultas de lectura: no cambian datos.
+-- Ejecutar en CENTRAL despues de los ciclos.
 
 PROMPT === Estado de las sucursales ===
 SELECT codigoSucursal, modoSyncSucursal, estadoConexionSucursal,
@@ -12,7 +11,7 @@ SELECT idSucursalEmisora, COUNT(*) AS cantidadFacturas,
 FROM FACTURA GROUP BY idSucursalEmisora ORDER BY idSucursalEmisora;
 
 PROMPT === Ventas por sucursal en un periodo ===
--- :desde y :hasta son fechas, por ejemplo DATE '2026-11-01' y DATE '2026-12-01'.
+-- :desde y :hasta son fechas
 SELECT s.codigoSucursal AS sucursal, COUNT(*) AS facturas,
        SUM(f.totalFactura) AS totalVendido
 FROM FACTURA f

@@ -1,6 +1,4 @@
--- Ejecutar en SUC01, SUC02 y SUC03 antes de su archivo 3_datosSucXX.sql.
--- Es una copia inicial del catalogo creado en CENTRAL para poder vender sin red.
--- Los cambios posteriores de PRODUCTO deben llegar por sincronizacion.
+-- Ejecutar en SUC01, SUC02 y SUC03 antes de 3_datosSucXX.sql.
 
 INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal)
 VALUES (1, 'SUC01', 'Sucursal Puntarenas', 'CONECTADO', 'SIN_CONEXION', NULL);

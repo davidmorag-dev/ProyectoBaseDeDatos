@@ -1,5 +1,4 @@
 -- Ejecutar una vez en CENTRAL, SUC01, SUC02 y SUC03.
--- Los cuatro nodos comparten la misma estructura; solo cambian sus datos.
 
 CREATE TABLE SUCURSAL (
     idSucursal NUMBER(3) PRIMARY KEY,

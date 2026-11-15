@@ -1,5 +1,4 @@
--- Ejecutar solo en SUC01, despues de 4_facturarVenta.sql. Cada ejecucion crea 3 facturas nuevas.
--- SP_EMITIR_FACTURA(sucursal emisora, sucursal del cliente, cliente local, detalles, factura)
+-- Ejecutar solo en SUC01. Cada ejecucion crea 3 facturas.
 
 VARIABLE idFactura NUMBER
 

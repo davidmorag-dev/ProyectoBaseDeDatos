@@ -1,5 +1,4 @@
 -- Ejecutar solo en CENTRAL, despues de crear LNK_SUC01 y LNK_SUC02.
--- La central inicia los ciclos; las sucursales siguen facturando sin ella.
 
 CREATE OR REPLACE PROCEDURE SP_REGISTRAR_BITACORA (
     pContraparte IN VARCHAR2,
@@ -22,7 +21,7 @@ END;
 /
 SHOW ERRORS PROCEDURE SP_REGISTRAR_BITACORA
 
--- Consolida un cliente recibido: lo redistribuye y registra sus equivalencias.
+-- Reparte el cliente y registra si esta repetido
 CREATE OR REPLACE PROCEDURE SP_CONSOLIDAR_CLIENTE (
     pClave IN VARCHAR2,
     pVersion IN NUMBER,
@@ -42,8 +41,6 @@ BEGIN
            pVersion, 'PENDIENTE', SYSDATE
     FROM SUCURSAL;
 
-    -- El canonico no cambia: si ya hay equivalencia se reutiliza;
-    -- si no, es el registro que llego primero a CENTRAL.
     BEGIN
         SELECT equivalencia.idSucursalCanonica, equivalencia.idClienteCanonico
         INTO idSucursalCanonicaActual, idClienteCanonicoActual
@@ -93,7 +90,7 @@ END;
 /
 SHOW ERRORS PROCEDURE SP_CONSOLIDAR_CLIENTE
 
--- Asigna a una sucursal el siguiente bloque libre de numeros de factura.
+-- Asigna el siguiente bloque de facturas
 CREATE OR REPLACE PROCEDURE SP_ASIGNAR_BLOQUE (
     pSucursal IN VARCHAR2
 ) AS
@@ -483,8 +480,6 @@ END;
 /
 SHOW ERRORS PROCEDURE SP_CAMBIAR_PRECIO
 
--- A demanda, conectado a CENTRAL:
 -- EXEC SP_CICLO_SYNC('SUC01');
 -- EXEC SP_CICLO_SYNC('SUC02');
--- Para cambiar un precio y dejarlo pendiente para las tres sucursales:
 -- EXEC SP_CAMBIAR_PRECIO(1, 455000);

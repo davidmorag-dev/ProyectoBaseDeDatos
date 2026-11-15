@@ -1,5 +1,4 @@
--- Ejecutar solo en SUC03, despues de 4_facturarVenta.sql. Cada ejecucion crea 2 facturas nuevas.
--- SUC03 no tiene enlace: sus facturas quedan PENDIENTE hasta generar el lote (6_generarPaqueteCorreo.sql).
+-- Ejecutar solo en SUC03. Cada ejecucion crea 2 facturas.
 
 VARIABLE idFactura NUMBER
 

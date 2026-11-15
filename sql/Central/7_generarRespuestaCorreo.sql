@@ -1,12 +1,5 @@
 -- Ejecutar solo en CENTRAL, despues de 6_aplicarPaqueteCorreo.sql.
--- Genera la respuesta por correo para una sucursal en modo diferido (SUC03):
--- cambios del catalogo, clientes de otras sucursales, bloques nuevos y acuses.
--- Usa la carpeta DIR_SYNC y las funciones FN_CAMPO y FN_HUELLA del archivo 6.
 
--- Convierte un registro pendiente en una linea de texto.
--- Producto: descripcion~precio~fecha
--- Cliente: tipo~numero~nombre~version~fecha
--- Bloque: sucursal~inicial~final~proximo~estado
 CREATE OR REPLACE FUNCTION FN_SERIALIZAR (
     pTabla IN VARCHAR2,
     pClave IN VARCHAR2
@@ -40,7 +33,7 @@ END;
 /
 SHOW ERRORS FUNCTION FN_SERIALIZAR
 
--- Numero de la proxima respuesta para una sucursal.
+-- Numero de la proxima respuesta
 CREATE OR REPLACE FUNCTION FN_SIGUIENTE_RESPUESTA (
     pDestino IN VARCHAR2
 ) RETURN NUMBER AS
@@ -54,8 +47,7 @@ END;
 /
 SHOW ERRORS FUNCTION FN_SIGUIENTE_RESPUESTA
 
--- Escribe respuesta_SUC03_000N.txt en DIR_SYNC con todo lo que la central tiene
--- pendiente para esa sucursal y los acuses de los envios que ya aplico.
+-- Escribe la respuesta para la sucursal
 CREATE OR REPLACE PROCEDURE SP_GENERAR_RESPUESTA (
     pDestino IN VARCHAR2,
     pNumero IN NUMBER
@@ -95,7 +87,7 @@ BEGIN
             FN_HUELLA(datosActuales));
     END LOOP;
 
-    -- Acuses: envios de la sucursal que la central ya aplico o descarto.
+    -- Acuses
     FOR acuse IN (
         SELECT idEnvioRecibido FROM SYNC_RECIBIDO
         WHERE origenRecibido = pDestino ORDER BY idEnvioRecibido
@@ -118,7 +110,7 @@ END;
 /
 SHOW ERRORS PROCEDURE SP_GENERAR_RESPUESTA
 
--- Genera la respuesta sola, todos los dias a las 9 p. m. (una hora despues del lote de SUC03).
+-- Genera la respuesta todos los dias a las 9 p. m.
 BEGIN
     DBMS_SCHEDULER.CREATE_JOB(
         job_name        => 'JOB_RESPUESTA_SUC03',
@@ -129,5 +121,4 @@ BEGIN
 END;
 /
 
--- A demanda:
 -- EXEC SP_GENERAR_RESPUESTA('SUC03', FN_SIGUIENTE_RESPUESTA('SUC03'));

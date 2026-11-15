@@ -1,10 +1,9 @@
 -- Ejecutar solo en CENTRAL, despues de 5_sincronizarCentral.sql.
--- Antes, como administrador de la base, crear la carpeta donde se guarda el lote recibido:
+-- Antes, como SYSTEM:
 --   CREATE DIRECTORY DIR_SYNC AS 'C:\sync';
 --   GRANT READ, WRITE ON DIRECTORY DIR_SYNC TO CENTRAL;
 
--- Devuelve el campo numero pN de un texto. pSeparador va escrito para expresion
--- regular: \| para la barra, ~ y # tal cual.
+-- Devuelve el campo pN de un texto
 CREATE OR REPLACE FUNCTION FN_CAMPO (
     pTexto IN VARCHAR2,
     pSeparador IN VARCHAR2,
@@ -17,7 +16,6 @@ END;
 /
 SHOW ERRORS FUNCTION FN_CAMPO
 
--- STANDARD_HASH es una funcion de SQL: en PL/SQL hay que llamarla con un SELECT.
 CREATE OR REPLACE FUNCTION FN_HUELLA (
     pTexto IN VARCHAR2
 ) RETURN VARCHAR2 AS
@@ -29,8 +27,7 @@ END;
 /
 SHOW ERRORS FUNCTION FN_HUELLA
 
--- Lee un lote enviado por una sucursal en modo diferido, comprueba que llego completo
--- y sin alteraciones, y lo aplica en una sola transaccion.
+-- Lee el lote de una sucursal y lo aplica
 CREATE OR REPLACE PROCEDURE SP_PROCESAR_LOTE (
     pArchivo IN VARCHAR2,
     pOrigen IN VARCHAR2
@@ -72,7 +69,7 @@ BEGIN
     END;
     UTL_FILE.FCLOSE(archivo);
 
-    -- Integridad: encabezado, cantidad de envios y huella de cada envio.
+    -- Validar el lote
     IF cantidadLineas = 0 OR FN_CAMPO(lineas(1), '\|', 1) <> 'ENC'
        OR FN_CAMPO(lineas(1), '\|', 2) <> pOrigen THEN
         RAISE_APPLICATION_ERROR(-20040, 'Encabezado del lote invalido');
@@ -90,7 +87,7 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20042, 'El lote llego incompleto');
     END IF;
 
-    -- Aplicacion en orden de idSalida; un envio ya recibido se omite.
+    -- Aplicar los envios
     FOR i IN 2 .. cantidadLineas LOOP
         IF FN_CAMPO(lineas(i), '\|', 1) = 'ENV' THEN
             idEnvioActual := TO_NUMBER(FN_CAMPO(lineas(i), '\|', 2));
@@ -199,5 +196,4 @@ END;
 /
 SHOW ERRORS PROCEDURE SP_PROCESAR_LOTE
 
--- A demanda, al recibir el lote por correo y guardarlo en la carpeta DIR_SYNC:
 -- EXEC SP_PROCESAR_LOTE('lote_SUC03_0001.txt', 'SUC03');

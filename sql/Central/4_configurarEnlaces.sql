@@ -1,6 +1,4 @@
--- Ejecutar solo en CENTRAL, conectado con el usuario dueno del esquema.
--- SQL*Plus solicita las claves; no guardarlas en Git.
--- Verificar antes la IP, el puerto del listener y el servicio de cada sucursal.
+-- Ejecutar solo en CENTRAL. No guardar las claves en Git.
 
 SET VERIFY OFF
 ACCEPT hostSuc01 CHAR PROMPT 'IP o nombre de SUC01: '

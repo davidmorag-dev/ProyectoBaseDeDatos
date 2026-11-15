@@ -1,8 +1,6 @@
 -- Ejecutar solo en SUC03 (modo diferido), despues de 6_generarPaqueteCorreo.sql.
--- Aplica la respuesta que la central manda por correo; el archivo debe estar en DIR_SYNC.
 
--- Devuelve el campo numero pN de un texto. pSeparador va escrito para expresion
--- regular: \| para la barra, ~ y # tal cual.
+-- Devuelve el campo pN de un texto
 CREATE OR REPLACE FUNCTION FN_CAMPO (
     pTexto IN VARCHAR2,
     pSeparador IN VARCHAR2,
@@ -15,8 +13,7 @@ END;
 /
 SHOW ERRORS FUNCTION FN_CAMPO
 
--- Lee la respuesta de la central, comprueba que llego completa y sin alteraciones,
--- y la aplica en una sola transaccion.
+-- Lee la respuesta de la central y la aplica
 CREATE OR REPLACE PROCEDURE SP_PROCESAR_RESPUESTA (
     pArchivo IN VARCHAR2,
     pSucursal IN VARCHAR2
@@ -55,7 +52,7 @@ BEGIN
     END;
     UTL_FILE.FCLOSE(archivo);
 
-    -- Integridad: encabezado, destino, cantidad de envios y huella de cada envio.
+    -- Validar la respuesta
     IF cantidadLineas = 0 OR FN_CAMPO(lineas(1), '\|', 1) <> 'ENC'
        OR FN_CAMPO(lineas(1), '\|', 2) <> 'CENTRAL'
        OR NVL(FN_CAMPO(lineas(1), '\|', 6), '-') <> pSucursal THEN
@@ -74,7 +71,7 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20062, 'La respuesta llego incompleta');
     END IF;
 
-    -- Aplicacion en orden de idSalida; un envio ya recibido se omite.
+    -- Aplicar los envios
     FOR i IN 2 .. cantidadLineas LOOP
         IF FN_CAMPO(lineas(i), '\|', 1) = 'ENV' THEN
             idEnvioActual := TO_NUMBER(FN_CAMPO(lineas(i), '\|', 2));
@@ -92,7 +89,7 @@ BEGIN
                 resultadoActual := 'APLICADO';
 
                 IF tablaActual = 'PRODUCTO' THEN
-                    -- Gana el cambio mas reciente: uno viejo de la central se descarta.
+                    -- Gana el cambio mas reciente
                     fechaRecibida := TO_DATE(FN_CAMPO(datosActuales, '~', 3), 'YYYY-MM-DD HH24:MI:SS');
                     BEGIN
                         SELECT fechaModificacionProducto INTO fechaLocal FROM PRODUCTO
@@ -118,7 +115,7 @@ BEGIN
                 ELSIF tablaActual = 'CLIENTE' THEN
                     idSucursalClienteActual := TO_NUMBER(SUBSTR(claveActual, 1, INSTR(claveActual, ':') - 1));
                     idClienteLocalActual := TO_NUMBER(SUBSTR(claveActual, INSTR(claveActual, ':') + 1));
-                    -- Los clientes propios ya estan aqui: la sucursal es su duena.
+                    -- Los clientes propios se descartan
                     IF idSucursalClienteActual = idSucursalPropia THEN
                         resultadoActual := 'DESCARTADO';
                     ELSE
@@ -179,7 +176,7 @@ BEGIN
             END IF;
 
         ELSIF FN_CAMPO(lineas(i), '\|', 1) = 'ACK' THEN
-            -- La central confirma un envio de esta sucursal: ya no se vuelve a mandar.
+            -- Acuse de la central
             UPDATE SYNC_SALIDA SET estadoSalida = 'APLICADO', fechaAplicacionSalida = SYSDATE
             WHERE idSalida = TO_NUMBER(FN_CAMPO(lineas(i), '\|', 2))
               AND destinoSalida = 'CENTRAL' AND estadoSalida <> 'APLICADO';
@@ -199,5 +196,4 @@ END;
 /
 SHOW ERRORS PROCEDURE SP_PROCESAR_RESPUESTA
 
--- A demanda, al recibir la respuesta por correo y guardarla en la carpeta DIR_SYNC:
 -- EXEC SP_PROCESAR_RESPUESTA('respuesta_SUC03_0001.txt', 'SUC03');

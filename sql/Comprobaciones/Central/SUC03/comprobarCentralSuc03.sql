@@ -1,12 +1,11 @@
--- Ejecutar solo en CENTRAL. Comprueba la sincronizacion por correo con SUC03 (Fiorella, Guanacaste).
--- SUC03 no tiene enlace: el lote llega por correo y se guarda en C:\sync.
--- Cada bloque se corre por separado (seleccionar y F9; los BEGIN ... END con F5).
+-- Ejecutar en CENTRAL. Correo con SUC03.
+-- Un bloque a la vez (F9; los BEGIN ... END con F5).
 SET SERVEROUTPUT ON
 
 
 -- PARTE A. LA CENTRAL LISTA PARA RECIBIR
 
--- A1. Confirmar el usuario y el servicio (usuario CENTRAL, servicio XEPDB1)
+-- A1. Confirmar el usuario y el servicio
 SELECT USER AS usuario, SYS_CONTEXT('USERENV', 'SERVICE_NAME') AS servicio FROM DUAL;
 
 -- A2. SUC03 registrada en modo DIFERIDO
@@ -29,7 +28,7 @@ SELECT object_name, object_type, status FROM user_objects WHERE status <> 'VALID
 -- B1. Directorio de Oracle (debe devolver C:\sync)
 SELECT directory_name, directory_path FROM all_directories WHERE directory_name = 'DIR_SYNC';
 
--- B2. Probar que Oracle puede escribir en C:\sync (debe crear C:\sync\prueba_central.txt)
+-- B2. Probar que Oracle puede escribir en C:\sync
 DECLARE
     archivo UTL_FILE.FILE_TYPE;
 BEGIN
@@ -40,7 +39,7 @@ BEGIN
 END;
 /
 
--- B3. Ver si el lote de Fiorella ya esta en C:\sync (cambiar 0001 si es otro numero)
+-- B3. Ver si el lote de Fiorella ya esta en C:\sync
 DECLARE
     existe BOOLEAN;
     tamano NUMBER;
@@ -58,16 +57,16 @@ END;
 
 -- PARTE C. APLICAR EL LOTE
 
--- C1. Antes de aplicar: anotar estos conteos para comparar
+-- C1. Conteos antes de aplicar
 SELECT (SELECT COUNT(*) FROM CLIENTE WHERE idSucursalOrigen = 3) AS clientesSuc03,
        (SELECT COUNT(*) FROM FACTURA WHERE idSucursalEmisora = 3) AS facturasSuc03,
        (SELECT COUNT(*) FROM SYNC_RECIBIDO WHERE origenRecibido = 'SUC03') AS recibidosSuc03
 FROM DUAL;
 
--- C2. Procesar el lote (cambiar 0001 si es otro numero)
+-- C2. Procesar el lote
 EXEC SP_PROCESAR_LOTE('lote_SUC03_0001.txt', 'SUC03');
 
--- C3. Despues de aplicar: repetir C1, los conteos deben haber subido
+-- C3. Conteos despues de aplicar
 SELECT (SELECT COUNT(*) FROM CLIENTE WHERE idSucursalOrigen = 3) AS clientesSuc03,
        (SELECT COUNT(*) FROM FACTURA WHERE idSucursalEmisora = 3) AS facturasSuc03,
        (SELECT COUNT(*) FROM SYNC_RECIBIDO WHERE origenRecibido = 'SUC03') AS recibidosSuc03
@@ -77,7 +76,7 @@ FROM DUAL;
 SELECT idEnvioRecibido, huellaRecibido, fechaRecepcionRecibido, resultadoRecibido FROM SYNC_RECIBIDO
 WHERE origenRecibido = 'SUC03' ORDER BY idEnvioRecibido;
 
--- C5. Facturas de SUC03 en la central (numeros del 2001 en adelante)
+-- C5. Facturas de SUC03 en la central
 SELECT idFactura, idClienteLocal, fechaEmisionFactura, totalFactura FROM FACTURA WHERE idSucursalEmisora = 3 ORDER BY idFactura;
 
 -- C6. Detalle de esas facturas
@@ -90,45 +89,45 @@ SELECT direccionBitacora, tablaAfectadaBitacora, fechaInicioBitacora, resultadoB
 WHERE contraparteBitacora = 'SUC03' ORDER BY idBitacora DESC FETCH FIRST 10 ROWS ONLY;
 
 
--- PARTE D. REPETIR EL MISMO LOTE (prueba 10 del plan)
+-- PARTE D. REPETIR EL MISMO LOTE
 
 -- D1. Procesar otra vez el mismo archivo
 EXEC SP_PROCESAR_LOTE('lote_SUC03_0001.txt', 'SUC03');
 
--- D2. Repetir C1: los conteos deben quedar iguales que en C3 (no se duplica nada)
+-- D2. Conteos otra vez: iguales que en C3
 SELECT (SELECT COUNT(*) FROM CLIENTE WHERE idSucursalOrigen = 3) AS clientesSuc03,
        (SELECT COUNT(*) FROM FACTURA WHERE idSucursalEmisora = 3) AS facturasSuc03,
        (SELECT COUNT(*) FROM SYNC_RECIBIDO WHERE origenRecibido = 'SUC03') AS recibidosSuc03
 FROM DUAL;
 
 
--- PARTE E. LA RESPUESTA HACIA SUC03 (despues de 7_generarRespuestaCorreo.sql)
+-- PARTE E. LA RESPUESTA HACIA SUC03
 
 -- E1. Procedimientos de la respuesta (todos deben salir VALID)
 SELECT object_name, object_type, status FROM user_objects
 WHERE object_name IN ('FN_SERIALIZAR', 'FN_SIGUIENTE_RESPUESTA', 'SP_GENERAR_RESPUESTA')
 ORDER BY object_name;
 
--- E2. Trabajo que genera la respuesta a las 9 p. m. (JOB_RESPUESTA_SUC03, ENABLED = TRUE)
+-- E2. Trabajo que genera la respuesta a las 9 p. m.
 SELECT job_name, enabled, state, next_run_date FROM user_scheduler_jobs WHERE job_name = 'JOB_RESPUESTA_SUC03';
 
--- E3. Lo que va en la respuesta: envios de la central hacia SUC03
+-- E3. Lo que va en la respuesta
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA
 WHERE destinoSalida = 'SUC03' GROUP BY tablaOrigenSalida, estadoSalida;
 
--- E4. Opcional: cambiar un precio para que la respuesta lleve un cambio del catalogo
+-- E4. Opcional: cambiar un precio
 EXEC SP_CAMBIAR_PRECIO(1, 455000);
 
 -- E5. Numero que tendra la proxima respuesta
 SELECT FN_SIGUIENTE_RESPUESTA('SUC03') AS proximaRespuesta FROM DUAL;
 
--- E6. Generar la respuesta (crea C:\sync\respuesta_SUC03_000N.txt; mandarla por correo a SUC03)
+-- E6. Generar la respuesta
 EXEC SP_GENERAR_RESPUESTA('SUC03', FN_SIGUIENTE_RESPUESTA('SUC03'));
 
--- E7. Despues de generar: los envios hacia SUC03 pasan a ENVIADO
+-- E7. Despues de generar: ENVIADO
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA
 WHERE destinoSalida = 'SUC03' GROUP BY tablaOrigenSalida, estadoSalida;
 
--- E8. Cuando llegue el siguiente lote de SUC03 y se procese: los envios pasan a APLICADO
+-- E8. Con el siguiente lote de SUC03: APLICADO
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA
 WHERE destinoSalida = 'SUC03' GROUP BY tablaOrigenSalida, estadoSalida;

@@ -1,6 +1,5 @@
 -- Ejecutar en cada sucursal, despues de cargar sus datos iniciales.
--- pDetalles recibe JSON, por ejemplo:
--- '[{"idProducto":1,"cantidad":1},{"idProducto":5,"cantidad":2}]'
+-- pDetalles: '[{"idProducto":1,"cantidad":1}]'
 
 CREATE OR REPLACE PROCEDURE SP_SOLICITAR_BLOQUE (
     pIdSucursal IN NUMBER
@@ -158,8 +157,7 @@ END;
 /
 SHOW ERRORS PROCEDURE SP_EMITIR_FACTURA
 
--- Despues de restaurar una copia antigua: retira el bloque activo
--- y pide uno nuevo, para no repetir numeros que quiza ya se usaron.
+-- Retira el bloque activo y pide uno nuevo
 CREATE OR REPLACE PROCEDURE SP_RETIRAR_BLOQUE (
     pIdSucursal IN NUMBER
 ) AS
@@ -177,7 +175,6 @@ END;
 /
 SHOW ERRORS PROCEDURE SP_RETIRAR_BLOQUE
 
--- Ejemplo para ejecutar a demanda en SUC01:
 -- VARIABLE idFactura NUMBER
 -- EXEC SP_EMITIR_FACTURA(1, 1, 1,
 --   '[{"idProducto":1,"cantidad":1},{"idProducto":5,"cantidad":2}]',

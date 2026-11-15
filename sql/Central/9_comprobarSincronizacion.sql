@@ -1,14 +1,14 @@
--- Ejecutar solo en CENTRAL. Cada bloque se corre por separado (seleccionar y F9 o F5) para ir comprobando.
+-- Ejecutar en CENTRAL, un bloque a la vez.
 
--- 1. Comprobar que los enlaces conectan (cada uno debe devolver 1)
+-- 1. Probar los enlaces
 SELECT 1 FROM DUAL@LNK_SUC01;
 SELECT 1 FROM DUAL@LNK_SUC02;
 
--- 2. Ejecutar el ciclo de sincronizacion de cada sucursal conectada
+-- 2. Ciclo de cada sucursal
 EXEC SP_CICLO_SYNC('SUC01');
 EXEC SP_CICLO_SYNC('SUC02');
 
--- 3. Ver lo que registro cada ciclo (SUBIDA y BAJADA deben salir OK o DESCARTADO)
+-- 3. Bitacora de los ciclos
 SELECT * FROM BITACORA_SYNC ORDER BY fechaInicioBitacora DESC;
 
 -- 4. Facturas recibidas en la central
@@ -17,26 +17,26 @@ SELECT idFactura, idSucursalEmisora, idSucursalCliente, idClienteLocal, totalFac
 -- 5. Clientes recibidos por sucursal de origen
 SELECT idSucursalOrigen, COUNT(*) AS clientes FROM CLIENTE GROUP BY idSucursalOrigen;
 
--- 6. Clientes duplicados detectados (por ejemplo Maria Rojas Mora)
+-- 6. Clientes repetidos
 SELECT * FROM CLIENTE_EQUIVALENCIA;
 
--- 7. Envios de la central que siguen pendientes hacia las sucursales
+-- 7. Envios pendientes hacia las sucursales
 SELECT destinoSalida, tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY destinoSalida, tablaOrigenSalida, estadoSalida;
 
--- 8. Bloques de numeracion de factura por sucursal
+-- 8. Bloques de facturas
 SELECT * FROM RANGO_FACTURA ORDER BY idRango;
 
--- 9. Estado de conexion y ultima sincronizacion de cada sucursal
+-- 9. Estado de cada sucursal
 SELECT codigoSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal FROM SUCURSAL;
 
--- 10. Procesar el lote por correo de SUC03 (el archivo debe estar en C:\sync)
+-- 10. Procesar el lote de SUC03
 EXEC SP_PROCESAR_LOTE('lote_SUC03_0001.txt', 'SUC03');
 
--- 11. Lotes recibidos de SUC03 y su resultado
+-- 11. Envios recibidos
 SELECT * FROM SYNC_RECIBIDO ORDER BY idRecibido;
 
--- 12. Trabajos automaticos (cada 5 minutos) y su ultima ejecucion
+-- 12. Trabajos automaticos
 SELECT job_name, enabled, last_start_date, next_run_date FROM user_scheduler_jobs;
 
--- 13. Objetos con errores (no debe devolver filas)
+-- 13. Objetos con errores
 SELECT object_name, object_type, status FROM user_objects WHERE status <> 'VALID';

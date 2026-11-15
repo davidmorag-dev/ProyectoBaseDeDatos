@@ -1,5 +1,5 @@
--- Ejecutar en CENTRAL despues de 5_sincronizarCentral.sql y de crear los enlaces.
--- Un trabajo por sucursal conectada: ejecuta SP_CICLO_SYNC cada 5 minutos.
+-- Ejecutar en CENTRAL despues de 5_sincronizarCentral.sql.
+-- Ejecuta SP_CICLO_SYNC cada 5 minutos para SUC01 y SUC02.
 
 BEGIN
     DBMS_SCHEDULER.CREATE_JOB(
@@ -27,9 +27,6 @@ BEGIN
 END;
 /
 
--- Lanzar un trabajo a demanda:
 -- EXEC DBMS_SCHEDULER.RUN_JOB('JOB_SYNC_SUC01');
--- Pausar la sincronizacion automatica (la demostracion de nodo caido):
 -- EXEC DBMS_SCHEDULER.DISABLE('JOB_SYNC_SUC01');
--- Ver estado y ultima ejecucion:
 -- SELECT job_name, enabled, last_start_date, next_run_date FROM USER_SCHEDULER_JOBS;
