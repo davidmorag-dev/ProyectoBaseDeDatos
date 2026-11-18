@@ -28,3 +28,8 @@ SELECT 'SUC02', COUNT(*) FROM SUCURSAL@LNK_SUC02;
 
 UNDEFINE hostSuc01 puertoSuc01 servicioSuc01 usuarioSuc01 claveSuc01
 UNDEFINE hostSuc02 puertoSuc02 servicioSuc02 usuarioSuc02 claveSuc02
+
+
+
+--Comprobar como quedo escrita las IPS  
+SELECT db_link, username, host FROM user_db_links;
