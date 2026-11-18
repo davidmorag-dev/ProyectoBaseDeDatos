@@ -5,7 +5,10 @@
 --   GRANT CREATE JOB TO SUC03;
 -- Los nombres de clientes no deben llevar los simbolos ; ~ #.
 
+------------------------------------------------------------
+-- FN_SIGUIENTE_PAQUETE
 -- numero del siguiente paquete para un destino
+------------------------------------------------------------
 CREATE OR REPLACE FUNCTION FN_SIGUIENTE_PAQUETE (pDestino IN VARCHAR2) RETURN NUMBER AS
     vNumero NUMBER;
 BEGIN
@@ -14,10 +17,12 @@ BEGIN
     RETURN vNumero;
 END;
 /
-SHOW ERRORS FUNCTION FN_SIGUIENTE_PAQUETE
 
+------------------------------------------------------------
+-- SP_GENERAR_PAQUETE
 -- escribe el archivo con los envios pendientes para pDestino. Cada linea lleva su huella
 -- ENC es el encabezado, ENV un envio y ACK el acuse de lo que ya se recibio del destino
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_GENERAR_PAQUETE (pOrigen IN VARCHAR2, pDestino IN VARCHAR2, pNumero IN NUMBER) AS
     vArchivo UTL_FILE.FILE_TYPE;
     vInicio DATE := SYSDATE;
@@ -64,9 +69,11 @@ EXCEPTION WHEN OTHERS THEN
     RAISE;
 END;
 /
-SHOW ERRORS PROCEDURE SP_GENERAR_PAQUETE
 
+------------------------------------------------------------
+-- SP_PROCESAR_PAQUETE
 -- lee un paquete, comprueba que llego completo y sin alteraciones, y lo aplica en una sola transaccion
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_PROCESAR_PAQUETE (pArchivo IN VARCHAR2, pOrigen IN VARCHAR2, pDestino IN VARCHAR2) AS
     TYPE tLineas IS TABLE OF VARCHAR2(4000) INDEX BY PLS_INTEGER;
     vLineas tLineas;
@@ -134,19 +141,23 @@ EXCEPTION WHEN OTHERS THEN
     RAISE;
 END;
 /
-SHOW ERRORS PROCEDURE SP_PROCESAR_PAQUETE
 
--- el lote se genera solo todos los dias a las 8 p. m.
+------------------------------------------------------------
+-- SP_ENVIAR_LOTE
+-- SUC03 manda el lote a la central todos los dias a las 8 p. m.
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_ENVIAR_LOTE AS
 BEGIN
     SP_GENERAR_PAQUETE('SUC03', 'CENTRAL', FN_SIGUIENTE_PAQUETE('CENTRAL'));
 END;
 /
-SHOW ERRORS PROCEDURE SP_ENVIAR_LOTE
-
+-- trabajo programado
 BEGIN
     DBMS_SCHEDULER.CREATE_JOB(job_name => 'JOB_LOTE_SUC03', job_type => 'STORED_PROCEDURE',
         job_action => 'SP_ENVIAR_LOTE', repeat_interval => 'FREQ=DAILY;BYHOUR=20;BYMINUTE=0;BYSECOND=0',
         enabled => TRUE);
 END;
 /
+
+-- errores de compilacion de este archivo (si no sale nada, todo bien)
+SELECT name, line, text FROM user_errors ORDER BY name, sequence;

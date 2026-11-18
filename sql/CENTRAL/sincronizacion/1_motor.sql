@@ -1,15 +1,18 @@
 -- CENTRAL. Motor comun de la sincronizacion. Es el mismo codigo en los cuatro nodos.
 -- Se ejecuta despues de 1_instalar.sql.
 
--- devuelve el campo numero pN de un texto separado por pSep
+------------------------------------------------------------
+-- 1. FN_CAMPO: devuelve el campo numero N de un texto separado por un simbolo
+------------------------------------------------------------
 CREATE OR REPLACE FUNCTION FN_CAMPO (pTexto IN VARCHAR2, pSep IN VARCHAR2, pN IN NUMBER) RETURN VARCHAR2 AS
 BEGIN
     RETURN REGEXP_SUBSTR(pTexto, '([^' || pSep || ']*)(' || pSep || '|$)', 1, pN, NULL, 1);
 END;
 /
-SHOW ERRORS FUNCTION FN_CAMPO
 
--- huella SHA-256 de un texto
+------------------------------------------------------------
+-- 2. FN_HUELLA: huella SHA-256 de un texto
+------------------------------------------------------------
 CREATE OR REPLACE FUNCTION FN_HUELLA (pTexto IN VARCHAR2) RETURN VARCHAR2 AS
     vHuella VARCHAR2(64);
 BEGIN
@@ -17,8 +20,10 @@ BEGIN
     RETURN vHuella;
 END;
 /
-SHOW ERRORS FUNCTION FN_HUELLA
 
+------------------------------------------------------------
+-- 3. SP_REGISTRAR_BITACORA: anota una sincronizacion en la bitacora
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_REGISTRAR_BITACORA (
     pContraparte IN VARCHAR2, pDireccion IN VARCHAR2, pTabla IN VARCHAR2, pInicio IN DATE, pResultado IN VARCHAR2
 ) AS
@@ -28,18 +33,20 @@ BEGIN
     COMMIT;
 END;
 /
-SHOW ERRORS PROCEDURE SP_REGISTRAR_BITACORA
 
--- deja un envio pendiente para que lo recoja la sincronizacion
+------------------------------------------------------------
+-- 4. SP_NUEVO_ENVIO: deja un envio pendiente para que lo recoja la sincronizacion
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_NUEVO_ENVIO (pTabla IN VARCHAR2, pClave IN VARCHAR2, pDestino IN VARCHAR2, pVersion IN NUMBER) AS
 BEGIN
     INSERT INTO SYNC_SALIDA (tablaOrigenSalida, claveRegistroSalida, destinoSalida, versionSalida, estadoSalida, fechaCreacionSalida)
     VALUES (pTabla, pClave, pDestino, pVersion, 'PENDIENTE', SYSDATE);
 END;
 /
-SHOW ERRORS PROCEDURE SP_NUEVO_ENVIO
 
--- convierte un registro en texto: campos separados por ~ y lineas de factura por #
+------------------------------------------------------------
+-- 5. FN_SERIALIZAR: convierte un registro en texto (campos con ~ y lineas de factura con #)
+------------------------------------------------------------
 CREATE OR REPLACE FUNCTION FN_SERIALIZAR (pTabla IN VARCHAR2, pClave IN VARCHAR2, pDestino IN VARCHAR2) RETURN VARCHAR2 AS
     vDatos VARCHAR2(4000);
 BEGIN
@@ -70,66 +77,11 @@ BEGIN
     RETURN vDatos;
 END;
 /
-SHOW ERRORS FUNCTION FN_SERIALIZAR
 
--- la central entrega el siguiente bloque de 1000 numeros a una sucursal
-CREATE OR REPLACE PROCEDURE SP_ASIGNAR_BLOQUE (pSucursal IN VARCHAR2) AS
-    vIdRango NUMBER;
-    vInicial NUMBER;
-BEGIN
-    SELECT MAX(idRango) + 1, MAX(numeroFinalRango) + 1 INTO vIdRango, vInicial FROM RANGO_FACTURA;
-    INSERT INTO RANGO_FACTURA VALUES (vIdRango, TO_NUMBER(SUBSTR(pSucursal, 4)), vInicial, vInicial + 999, vInicial, 'ACTIVO');
-    SP_NUEVO_ENVIO('RANGO_FACTURA', vIdRango, pSucursal, 1);
-END;
-/
-SHOW ERRORS PROCEDURE SP_ASIGNAR_BLOQUE
-
--- la central reparte el cliente a todas las sucursales y detecta si esta repetido
-CREATE OR REPLACE PROCEDURE SP_CONSOLIDAR_CLIENTE (pSuc IN NUMBER, pLocal IN NUMBER) AS
-    vTipo VARCHAR2(10);
-    vNumero VARCHAR2(30);
-    vVersion NUMBER;
-    vSucCan NUMBER;
-    vCliCan NUMBER;
-BEGIN
-    SELECT tipoIdentificacionCliente, numeroIdentificacionCliente, versionCliente INTO vTipo, vNumero, vVersion
-    FROM CLIENTE WHERE idSucursalOrigen = pSuc AND idClienteLocal = pLocal;
-
-    -- todas las sucursales lo reciben, tambien la que lo creo (ahi se descarta)
-    FOR s IN (SELECT codigoSucursal FROM SUCURSAL) LOOP
-        SP_NUEVO_ENVIO('CLIENTE', pSuc || ':' || pLocal, s.codigoSucursal, vVersion);
-    END LOOP;
-
-    -- el canonico es el que ya tenia equivalencia o, si no, el primero que llego
-    BEGIN
-        SELECT e.idSucursalCanonica, e.idClienteCanonico INTO vSucCan, vCliCan
-        FROM CLIENTE_EQUIVALENCIA e
-        JOIN CLIENTE c ON c.idSucursalOrigen = e.idSucursalOrigen AND c.idClienteLocal = e.idClienteLocal
-        WHERE c.tipoIdentificacionCliente = vTipo AND c.numeroIdentificacionCliente = vNumero AND ROWNUM = 1;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-        SELECT idSucursalOrigen, idClienteLocal INTO vSucCan, vCliCan FROM (
-            SELECT idSucursalOrigen, idClienteLocal FROM CLIENTE
-            WHERE tipoIdentificacionCliente = vTipo AND numeroIdentificacionCliente = vNumero
-            ORDER BY CASE WHEN idSucursalOrigen = pSuc AND idClienteLocal = pLocal THEN 1 ELSE 0 END,
-                fechaModificacionCliente, idSucursalOrigen, idClienteLocal
-        ) WHERE ROWNUM = 1;
-    END;
-
-    -- los demas con la misma identificacion apuntan al canonico
-    FOR r IN (SELECT idSucursalOrigen, idClienteLocal FROM CLIENTE
-              WHERE tipoIdentificacionCliente = vTipo AND numeroIdentificacionCliente = vNumero
-              AND NOT (idSucursalOrigen = vSucCan AND idClienteLocal = vCliCan)) LOOP
-        BEGIN
-            INSERT INTO CLIENTE_EQUIVALENCIA VALUES (r.idSucursalOrigen, r.idClienteLocal, vSucCan, vCliCan, SYSDATE);
-        EXCEPTION WHEN DUP_VAL_ON_INDEX THEN NULL;
-        END;
-    END LOOP;
-END;
-/
-SHOW ERRORS PROCEDURE SP_CONSOLIDAR_CLIENTE
-
--- aplica un envio en este nodo. Sirve para los dos modos: el envio llega por el enlace o por el archivo
+------------------------------------------------------------
+-- 6. SP_APLICAR_ENVIO: aplica un envio en este nodo. Sirve para los dos modos (enlace o archivo)
 -- pOrigen es el nodo que lo manda. pResultado: APLICADO, DESCARTADO u OMITIDO (ya se habia recibido)
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_APLICAR_ENVIO (
     pOrigen IN VARCHAR2, pIdEnvio IN NUMBER, pTabla IN VARCHAR2, pClave IN VARCHAR2,
     pVersion IN NUMBER, pDatos IN VARCHAR2, pResultado OUT VARCHAR2
@@ -177,7 +129,8 @@ BEGIN
         IF SQL%ROWCOUNT = 0 THEN
             pResultado := 'DESCARTADO';
         ELSIF pOrigen <> 'CENTRAL' THEN
-            SP_CONSOLIDAR_CLIENTE(vSuc, vLocal);
+            -- solo la central reparte y consolida los clientes
+            EXECUTE IMMEDIATE 'BEGIN SP_CONSOLIDAR_CLIENTE(:1, :2); END;' USING vSuc, vLocal;
         END IF;
 
     ELSIF pTabla = 'FACTURA' THEN
@@ -202,8 +155,8 @@ BEGIN
                 TO_NUMBER(FN_CAMPO(pDatos, '~', 2)), TO_NUMBER(FN_CAMPO(pDatos, '~', 3)),
                 TO_NUMBER(FN_CAMPO(pDatos, '~', 4)), FN_CAMPO(pDatos, '~', 5));
         ELSE
-            -- la sucursal pidio un bloque
-            SP_ASIGNAR_BLOQUE(pOrigen);
+            -- la sucursal pidio un bloque, solo la central lo asigna
+            EXECUTE IMMEDIATE 'BEGIN SP_ASIGNAR_BLOQUE(:1); END;' USING pOrigen;
         END IF;
     ELSE
         RAISE_APPLICATION_ERROR(-20001, 'Tipo de envio desconocido: ' || pTabla);
@@ -213,4 +166,7 @@ BEGIN
     VALUES (pOrigen, pIdEnvio, FN_HUELLA(pDatos), SYSDATE, pResultado);
 END;
 /
-SHOW ERRORS PROCEDURE SP_APLICAR_ENVIO
+
+
+-- errores de compilacion de este archivo (si no sale nada, todo bien)
+SELECT name, line, text FROM user_errors ORDER BY name, sequence;

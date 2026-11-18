@@ -1,6 +1,61 @@
 -- CENTRAL. Sincronizacion con SUC01 y SUC02 (modo conectado). Se ejecuta despues de 1_motor.sql.
 
+------------------------------------------------------------
+-- SP_ASIGNAR_BLOQUE
+-- la central entrega el siguiente bloque de 1000 numeros a una sucursal
+------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE SP_ASIGNAR_BLOQUE (pSucursal IN VARCHAR2) AS
+    vIdRango NUMBER;
+    vInicial NUMBER;
+BEGIN
+    SELECT MAX(idRango) + 1, MAX(numeroFinalRango) + 1 INTO vIdRango, vInicial FROM RANGO_FACTURA;
+    INSERT INTO RANGO_FACTURA VALUES (vIdRango, TO_NUMBER(SUBSTR(pSucursal, 4)), vInicial, vInicial + 999, vInicial, 'ACTIVO');
+    SP_NUEVO_ENVIO('RANGO_FACTURA', vIdRango, pSucursal, 1);
+END;
+/
+
+------------------------------------------------------------
+-- SP_CONSOLIDAR_CLIENTE
+-- la central reparte el cliente a todas las sucursales y detecta si esta repetido
+------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE SP_CONSOLIDAR_CLIENTE (pSuc IN NUMBER, pLocal IN NUMBER) AS
+    vTipo VARCHAR2(10);
+    vNumero VARCHAR2(30);
+    vVersion NUMBER;
+    vSucCan NUMBER;
+    vCliCan NUMBER;
+BEGIN
+    SELECT tipoIdentificacionCliente, numeroIdentificacionCliente, versionCliente INTO vTipo, vNumero, vVersion
+    FROM CLIENTE WHERE idSucursalOrigen = pSuc AND idClienteLocal = pLocal;
+
+    -- todas las sucursales lo reciben, tambien la que lo creo (ahi se descarta)
+    FOR s IN (SELECT codigoSucursal FROM SUCURSAL) LOOP
+        SP_NUEVO_ENVIO('CLIENTE', pSuc || ':' || pLocal, s.codigoSucursal, vVersion);
+    END LOOP;
+
+    -- el canonico es el cliente de menor sucursal con esa identificacion
+    SELECT idSucursalOrigen, idClienteLocal INTO vSucCan, vCliCan FROM (
+        SELECT idSucursalOrigen, idClienteLocal FROM CLIENTE
+        WHERE tipoIdentificacionCliente = vTipo AND numeroIdentificacionCliente = vNumero
+        ORDER BY idSucursalOrigen, idClienteLocal
+    ) WHERE ROWNUM = 1;
+
+    -- los demas con esa identificacion apuntan al canonico
+    DELETE FROM CLIENTE_EQUIVALENCIA WHERE (idSucursalOrigen, idClienteLocal) IN (
+        SELECT idSucursalOrigen, idClienteLocal FROM CLIENTE
+        WHERE tipoIdentificacionCliente = vTipo AND numeroIdentificacionCliente = vNumero
+    );
+    INSERT INTO CLIENTE_EQUIVALENCIA
+    SELECT idSucursalOrigen, idClienteLocal, vSucCan, vCliCan, SYSDATE FROM CLIENTE
+    WHERE tipoIdentificacionCliente = vTipo AND numeroIdentificacionCliente = vNumero
+    AND NOT (idSucursalOrigen = vSucCan AND idClienteLocal = vCliCan);
+END;
+/
+
+------------------------------------------------------------
+-- SP_CICLO_SYNC
 -- ciclo completo con una sucursal conectada: primero sube lo suyo y despues baja lo de la central
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_CICLO_SYNC (pSucursal IN VARCHAR2) AS
     vEnlace VARCHAR2(20) := 'LNK_' || pSucursal;
     vPendientes SYS_REFCURSOR;
@@ -68,9 +123,11 @@ EXCEPTION WHEN OTHERS THEN
     RAISE;
 END;
 /
-SHOW ERRORS PROCEDURE SP_CICLO_SYNC
 
+------------------------------------------------------------
+-- SP_CAMBIAR_PRECIO
 -- cambia el precio en la central y lo deja pendiente para todas las sucursales
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_CAMBIAR_PRECIO (pIdProducto IN NUMBER, pPrecio IN NUMBER) AS
 BEGIN
     UPDATE PRODUCTO SET precioActualProducto = pPrecio, fechaModificacionProducto = SYSDATE WHERE idProducto = pIdProducto;
@@ -86,4 +143,7 @@ EXCEPTION WHEN OTHERS THEN
     RAISE;
 END;
 /
-SHOW ERRORS PROCEDURE SP_CAMBIAR_PRECIO
+
+
+-- errores de compilacion de este archivo (si no sale nada, todo bien)
+SELECT name, line, text FROM user_errors ORDER BY name, sequence;

@@ -1,10 +1,13 @@
--- CENTRAL. Sincronizacion por correo con SUC03. Se ejecuta despues de 1_motor.sql.
+-- CENTRAL. Sincronizacion por correo con SUC03. Se ejecuta despues de 2_conectado.sql.
 -- Antes, como SYSTEM en XEPDB1:
 --   CREATE DIRECTORY DIR_SYNC AS 'C:\sync';
 --   GRANT READ, WRITE ON DIRECTORY DIR_SYNC TO CENTRAL;
 --   GRANT CREATE JOB TO CENTRAL;
 
+------------------------------------------------------------
+-- FN_SIGUIENTE_PAQUETE
 -- numero del siguiente paquete para un destino
+------------------------------------------------------------
 CREATE OR REPLACE FUNCTION FN_SIGUIENTE_PAQUETE (pDestino IN VARCHAR2) RETURN NUMBER AS
     vNumero NUMBER;
 BEGIN
@@ -13,10 +16,12 @@ BEGIN
     RETURN vNumero;
 END;
 /
-SHOW ERRORS FUNCTION FN_SIGUIENTE_PAQUETE
 
+------------------------------------------------------------
+-- SP_GENERAR_PAQUETE
 -- escribe el archivo con los envios pendientes para pDestino. Cada linea lleva su huella
 -- ENC es el encabezado, ENV un envio y ACK el acuse de lo que ya se recibio del destino
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_GENERAR_PAQUETE (pOrigen IN VARCHAR2, pDestino IN VARCHAR2, pNumero IN NUMBER) AS
     vArchivo UTL_FILE.FILE_TYPE;
     vInicio DATE := SYSDATE;
@@ -63,9 +68,11 @@ EXCEPTION WHEN OTHERS THEN
     RAISE;
 END;
 /
-SHOW ERRORS PROCEDURE SP_GENERAR_PAQUETE
 
+------------------------------------------------------------
+-- SP_PROCESAR_PAQUETE
 -- lee un paquete, comprueba que llego completo y sin alteraciones, y lo aplica en una sola transaccion
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_PROCESAR_PAQUETE (pArchivo IN VARCHAR2, pOrigen IN VARCHAR2, pDestino IN VARCHAR2) AS
     TYPE tLineas IS TABLE OF VARCHAR2(4000) INDEX BY PLS_INTEGER;
     vLineas tLineas;
@@ -133,19 +140,23 @@ EXCEPTION WHEN OTHERS THEN
     RAISE;
 END;
 /
-SHOW ERRORS PROCEDURE SP_PROCESAR_PAQUETE
 
+------------------------------------------------------------
+-- SP_ENVIAR_RESPUESTA
 -- la central responde a SUC03 todos los dias a las 9 p. m.
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_ENVIAR_RESPUESTA AS
 BEGIN
     SP_GENERAR_PAQUETE('CENTRAL', 'SUC03', FN_SIGUIENTE_PAQUETE('SUC03'));
 END;
 /
-SHOW ERRORS PROCEDURE SP_ENVIAR_RESPUESTA
-
+-- trabajo programado
 BEGIN
     DBMS_SCHEDULER.CREATE_JOB(job_name => 'JOB_RESPUESTA_SUC03', job_type => 'STORED_PROCEDURE',
         job_action => 'SP_ENVIAR_RESPUESTA', repeat_interval => 'FREQ=DAILY;BYHOUR=21;BYMINUTE=0;BYSECOND=0',
         enabled => TRUE);
 END;
 /
+
+-- errores de compilacion de este archivo (si no sale nada, todo bien)
+SELECT name, line, text FROM user_errors ORDER BY name, sequence;

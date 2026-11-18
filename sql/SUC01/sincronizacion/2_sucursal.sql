@@ -1,7 +1,10 @@
 -- SUC01. Facturar y guardar clientes. Cada cambio deja un envio pendiente en SYNC_SALIDA.
 -- Se ejecuta despues de 1_motor.sql.
 
+------------------------------------------------------------
+-- SP_SOLICITAR_BLOQUE
 -- pide un bloque nuevo a la central, si no hay una solicitud pendiente
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_SOLICITAR_BLOQUE (pIdSucursal IN NUMBER) AS
     vPendientes NUMBER;
 BEGIN
@@ -13,9 +16,11 @@ BEGIN
     COMMIT;
 END;
 /
-SHOW ERRORS PROCEDURE SP_SOLICITAR_BLOQUE
 
+------------------------------------------------------------
+-- SP_EMITIR_FACTURA
 -- emite una factura con el siguiente numero del bloque. pDetalles va como 'producto:cantidad;producto:cantidad'
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_EMITIR_FACTURA (
     pIdSucursal IN NUMBER, pIdSucursalCliente IN NUMBER, pIdClienteLocal IN NUMBER,
     pDetalles IN VARCHAR2, pIdFactura OUT NUMBER
@@ -73,18 +78,22 @@ EXCEPTION WHEN OTHERS THEN
     RAISE;
 END;
 /
-SHOW ERRORS PROCEDURE SP_EMITIR_FACTURA
 
+------------------------------------------------------------
+-- SP_RETIRAR_BLOQUE
 -- se usa despues de restaurar una copia vieja: el bloque activo se retira y se pide otro
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_RETIRAR_BLOQUE (pIdSucursal IN NUMBER) AS
 BEGIN
     UPDATE RANGO_FACTURA SET estadoRango = 'RETIRADO' WHERE idSucursal = pIdSucursal AND estadoRango = 'ACTIVO';
     SP_SOLICITAR_BLOQUE(pIdSucursal);
 END;
 /
-SHOW ERRORS PROCEDURE SP_RETIRAR_BLOQUE
 
+------------------------------------------------------------
+-- SP_GUARDAR_CLIENTE
 -- crea el cliente o, si ya existe, le sube la version
+------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE SP_GUARDAR_CLIENTE (
     pIdSucursal IN NUMBER, pIdClienteLocal IN NUMBER, pTipo IN VARCHAR2, pNumero IN VARCHAR2, pNombre IN VARCHAR2
 ) AS
@@ -104,4 +113,7 @@ EXCEPTION WHEN OTHERS THEN
     RAISE;
 END;
 /
-SHOW ERRORS PROCEDURE SP_GUARDAR_CLIENTE
+
+
+-- errores de compilacion de este archivo (si no sale nada, todo bien)
+SELECT name, line, text FROM user_errors ORDER BY name, sequence;
