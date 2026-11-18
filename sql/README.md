@@ -5,24 +5,24 @@ Una carpeta por computadora. Cada persona ejecuta solo los archivos de su carpet
 | Carpeta | Nodo | Modo | Archivos |
 |---|---|---|---|
 | `CENTRAL` | CENTRAL (David) | Coordinador | `1_instalar`, `2_sincronizacion`, `3_operar` |
-| `SUC01` | Puntarenas (Ashly) | Conectada | `1_instalar`, `2_operar` |
-| `SUC02` | Alajuela (Valeria) | Conectada | `1_instalar`, `2_operar` |
+| `SUC01` | Puntarenas (Ashly) | Conectada | `1_instalar`, `2_sincronizacion`, `3_operar` |
+| `SUC02` | Alajuela (Valeria) | Conectada | `1_instalar`, `2_sincronizacion`, `3_operar` |
 | `SUC03` | Guanacaste (Fiorella) | Por correo | `1_instalar`, `2_sincronizacion`, `3_operar` |
 
 ## Que hace cada archivo
 
-- `1_instalar.sql`: se ejecuta una sola vez en una base recien creada. Crea las 10 tablas, carga los datos iniciales y, en las sucursales, los procedimientos para facturar y guardar clientes sin necesitar red.
+- `1_instalar.sql`: se ejecuta una sola vez en una base recien creada. Crea las 10 tablas y carga los datos iniciales.
 - `2_sincronizacion.sql`: todo lo que sincroniza. Es el archivo central del proyecto.
   - CENTRAL: parte A, ciclo de sincronizacion conectada; parte B, recibir el lote de SUC03 y generar su respuesta; parte C, enlaces hacia SUC01 y SUC02 (pide IP, usuario y clave; no guardar claves en Git).
-  - SUC03: parte A, generar el lote hacia la central; parte B, aplicar la respuesta de la central.
-  - SUC01 y SUC02 no tienen este archivo: en modo conectado quien inicia la sincronizacion es la central.
-- `2_operar.sql` / `3_operar.sql`: comprobaciones y operaciones del dia a dia (facturar, ejecutar el ciclo, ver bitacora, activar el programador). Se ejecutan cuantas veces haga falta, un bloque a la vez.
+  - SUC01 y SUC02: parte A, facturar y bloques de numeracion; parte B, guardar clientes. Cada factura o cliente deja un envio PENDIENTE en `SYNC_SALIDA`, aunque no haya red; la central lo recoge por el enlace.
+  - SUC03: partes A y B, las mismas que SUC01 y SUC02; parte C, generar el lote hacia la central; parte D, aplicar la respuesta de la central.
+- `3_operar.sql`: comprobaciones y operaciones del dia a dia (facturas de prueba, ejecutar el ciclo, ver bitacora, activar el programador). Se ejecuta cuantas veces haga falta, un bloque a la vez.
 
 ## Orden
 
 1. En los cuatro nodos: `1_instalar.sql`.
 2. En CENTRAL y SUC03, un administrador crea antes la carpeta `C:\sync`, el directorio `DIR_SYNC` y el permiso `CREATE JOB` (los comandos estan al inicio de cada `2_sincronizacion.sql`).
-3. En CENTRAL y SUC03: `2_sincronizacion.sql`. En CENTRAL la parte C se ejecuta al final, cuando SUC01 y SUC02 ya tienen Oracle accesible por red.
+3. En los cuatro nodos: `2_sincronizacion.sql`. En CENTRAL la parte C se ejecuta al final, cuando SUC01 y SUC02 ya tienen Oracle accesible por red.
 4. En CENTRAL: `3_operar.sql`, seccion 1 para comprobar los enlaces, seccion 2 para el primer ciclo manual y seccion 3 para activar la sincronizacion automatica cada 5 minutos.
 
 ## Operaciones frecuentes
