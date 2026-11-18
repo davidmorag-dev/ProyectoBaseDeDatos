@@ -1,7 +1,6 @@
 -- SUC01. Se ejecuta una sola vez, en una base recien creada.
 -- Crea las tablas, el catalogo inicial y los datos propios de la sucursal.
 
-
 -- PARTE A. TABLAS
 
 CREATE TABLE SUCURSAL (
@@ -127,14 +126,16 @@ CREATE TABLE BITACORA_SYNC (
         CHECK (resultadoBitacora IN ('OK', 'ERROR', 'DESCARTADO', 'OMITIDO'))
 );
 
-
 -- PARTE B. CATALOGO INICIAL (copia de la central)
 
-INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal)
+INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal,
+                      estadoConexionSucursal, fechaUltimaSyncSucursal)
 VALUES (1, 'SUC01', 'Sucursal Puntarenas', 'CONECTADO', 'SIN_CONEXION', NULL);
-INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal)
+INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal,
+                      estadoConexionSucursal, fechaUltimaSyncSucursal)
 VALUES (2, 'SUC02', 'Sucursal Alajuela', 'CONECTADO', 'SIN_CONEXION', NULL);
-INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal)
+INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal,
+                      estadoConexionSucursal, fechaUltimaSyncSucursal)
 VALUES (3, 'SUC03', 'Sucursal Guanacaste', 'DIFERIDO', 'SIN_CONEXION', NULL);
 
 INSERT INTO PRODUCTO VALUES (1, 'Laptop 15 pulgadas', 450000, DATE '2026-11-01');
@@ -150,14 +151,15 @@ INSERT INTO PRODUCTO VALUES (10, 'Router WiFi', 31000, DATE '2026-11-01');
 
 COMMIT;
 
-
 -- PARTE C. DATOS PROPIOS DE SUC01
 
 -- Bloque de facturas de SUC01
 INSERT INTO RANGO_FACTURA VALUES (1, 1, 1, 1000, 1, 'ACTIVO');
 
 -- CLIENTE
-INSERT INTO CLIENTE VALUES (1, 1, 'CEDULA', '101110111', 'Maria Rojas Mora', 1, SYSDATE); -- tambien esta en SUC02
+-- tambien esta en SUC02
+INSERT INTO CLIENTE
+VALUES (1, 1, 'CEDULA', '101110111', 'Maria Rojas Mora', 1, SYSDATE);
 INSERT INTO CLIENTE VALUES (1, 2, 'CEDULA', '202220222', 'Carlos Vargas Soto', 1, SYSDATE);
 INSERT INTO CLIENTE VALUES (1, 3, 'CEDULA', '303330333', 'Ana Jimenez Cruz', 1, SYSDATE);
 

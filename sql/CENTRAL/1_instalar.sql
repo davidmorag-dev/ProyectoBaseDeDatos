@@ -1,7 +1,6 @@
 -- CENTRAL. Se ejecuta una sola vez, en una base recien creada.
 -- Crea las 10 tablas y carga las sucursales, los productos y los bloques de facturas.
 
-
 -- PARTE A. TABLAS
 
 CREATE TABLE SUCURSAL (
@@ -127,14 +126,16 @@ CREATE TABLE BITACORA_SYNC (
         CHECK (resultadoBitacora IN ('OK', 'ERROR', 'DESCARTADO', 'OMITIDO'))
 );
 
-
 -- PARTE B. DATOS INICIALES
 
-INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal)
+INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal,
+                      estadoConexionSucursal, fechaUltimaSyncSucursal)
 VALUES (1, 'SUC01', 'Sucursal Puntarenas', 'CONECTADO', 'SIN_CONEXION', NULL);
-INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal)
+INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal,
+                      estadoConexionSucursal, fechaUltimaSyncSucursal)
 VALUES (2, 'SUC02', 'Sucursal Alajuela', 'CONECTADO', 'SIN_CONEXION', NULL);
-INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal)
+INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal,
+                      estadoConexionSucursal, fechaUltimaSyncSucursal)
 VALUES (3, 'SUC03', 'Sucursal Guanacaste', 'DIFERIDO', 'SIN_CONEXION', NULL);
 
 -- PRODUCTO

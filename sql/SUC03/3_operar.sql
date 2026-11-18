@@ -2,9 +2,10 @@
 -- Un bloque a la vez (F9; los BEGIN ... END y los EXEC con F5).
 SET SERVEROUTPUT ON
 
-
 -- 1. Confirmar el usuario y el servicio
-SELECT USER AS usuario, SYS_CONTEXT('USERENV', 'SERVICE_NAME') AS servicio, SYS_CONTEXT('USERENV', 'SERVER_HOST') AS equipo FROM DUAL;
+SELECT USER AS usuario, SYS_CONTEXT('USERENV', 'SERVICE_NAME') AS servicio,
+       SYS_CONTEXT('USERENV', 'SERVER_HOST') AS equipo
+FROM DUAL;
 
 -- 2. Las 10 tablas del proyecto (debe devolver 10 filas)
 SELECT table_name FROM user_tables
@@ -20,12 +21,15 @@ UNION ALL SELECT 'CLIENTE', COUNT(*) FROM CLIENTE
 UNION ALL SELECT 'FACTURA', COUNT(*) FROM FACTURA;
 
 -- 4. Bloque de facturas propio (del 2001 al 3000, ACTIVO)
-SELECT idRango, idSucursal, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango FROM RANGO_FACTURA ORDER BY idRango;
+SELECT idRango, idSucursal, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango
+FROM RANGO_FACTURA
+ORDER BY idRango;
 
 -- 5. Procedimientos de facturacion y del correo (todos deben salir VALID)
 SELECT object_name, object_type, status FROM user_objects
-WHERE object_name IN ('SP_SOLICITAR_BLOQUE', 'SP_EMITIR_FACTURA', 'SP_RETIRAR_BLOQUE', 'SP_GUARDAR_CLIENTE',
-                      'SP_REGISTRAR_BITACORA', 'FN_SERIALIZAR', 'FN_SIGUIENTE_LOTE', 'FN_HUELLA', 'SP_GENERAR_LOTE')
+WHERE object_name IN ('SP_SOLICITAR_BLOQUE', 'SP_EMITIR_FACTURA', 'SP_RETIRAR_BLOQUE',
+                      'SP_GUARDAR_CLIENTE', 'SP_REGISTRAR_BITACORA', 'FN_SERIALIZAR',
+                      'FN_SIGUIENTE_LOTE', 'FN_HUELLA', 'SP_GENERAR_LOTE')
 ORDER BY object_name;
 
 -- 6. Objetos con errores (no debe devolver filas)
@@ -62,7 +66,10 @@ EXEC SP_EMITIR_FACTURA(3, 3, 2, '[{"idProducto":6,"cantidad":1},{"idProducto":9,
 PRINT idFactura
 
 -- 12. Envios pendientes hacia CENTRAL
-SELECT idSalida, tablaOrigenSalida, claveRegistroSalida, estadoSalida FROM SYNC_SALIDA WHERE destinoSalida = 'CENTRAL' ORDER BY idSalida;
+SELECT idSalida, tablaOrigenSalida, claveRegistroSalida, estadoSalida
+FROM SYNC_SALIDA
+WHERE destinoSalida = 'CENTRAL'
+ORDER BY idSalida;
 
 -- 13. Numero que tendra el proximo lote
 SELECT FN_SIGUIENTE_LOTE AS proximoLote FROM DUAL;
@@ -71,12 +78,14 @@ SELECT FN_SIGUIENTE_LOTE AS proximoLote FROM DUAL;
 EXEC SP_GENERAR_LOTE(FN_SIGUIENTE_LOTE);
 
 -- 15. Despues de generar: ENVIADO
-SELECT estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA WHERE destinoSalida = 'CENTRAL' GROUP BY estadoSalida;
+SELECT estadoSalida, COUNT(*) AS cantidad
+FROM SYNC_SALIDA
+WHERE destinoSalida = 'CENTRAL'
+GROUP BY estadoSalida;
 
 -- 16. Registro de lotes generados (LOTE_GEN debe salir OK)
 SELECT direccionBitacora, tablaAfectadaBitacora, fechaInicioBitacora, resultadoBitacora
 FROM BITACORA_SYNC ORDER BY idBitacora DESC FETCH FIRST 10 ROWS ONLY;
-
 
 -- RESPUESTA DE LA CENTRAL
 
@@ -104,7 +113,9 @@ SELECT idEnvioRecibido, fechaRecepcionRecibido, resultadoRecibido FROM SYNC_RECI
 WHERE origenRecibido = 'CENTRAL' ORDER BY idEnvioRecibido;
 
 -- 22. Precios actuales
-SELECT idProducto, precioActualProducto, fechaModificacionProducto FROM PRODUCTO ORDER BY idProducto;
+SELECT idProducto, precioActualProducto, fechaModificacionProducto
+FROM PRODUCTO
+ORDER BY idProducto;
 
 -- 23. Aplicar otra vez y repetir 18: sin cambios
 EXEC SP_PROCESAR_RESPUESTA('respuesta_SUC03_0001.txt', 'SUC03');

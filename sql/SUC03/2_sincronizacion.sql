@@ -1,11 +1,10 @@
 -- SUC03. Sincronizacion por correo. Se ejecuta despues de 1_instalar.sql.
--- Las partes A y B generan los envios pendientes; las partes C y D los mandan y reciben por archivo.
+-- Partes A y B: generan los envios pendientes. Partes C y D: los mandan y reciben por archivo.
 -- Antes, como SYSTEM en XEPDB1:
 --   CREATE DIRECTORY DIR_SYNC AS 'C:\sync';
 --   GRANT READ, WRITE ON DIRECTORY DIR_SYNC TO SUC03;
 --   GRANT CREATE JOB TO SUC03;
 -- Los nombres de clientes no deben llevar los simbolos | ~ #.
-
 
 -- PARTE A. FACTURAR Y BLOQUES DE NUMERACION
 
@@ -189,7 +188,6 @@ SHOW ERRORS PROCEDURE SP_RETIRAR_BLOQUE
 --   :idFactura);
 -- PRINT idFactura
 
-
 -- PARTE B. GUARDAR CLIENTES
 
 CREATE OR REPLACE PROCEDURE SP_GUARDAR_CLIENTE (
@@ -252,7 +250,6 @@ END;
 SHOW ERRORS PROCEDURE SP_GUARDAR_CLIENTE
 
 -- EXEC SP_GUARDAR_CLIENTE(1, 4, 'CEDULA', '404440444', 'Nuevo Cliente');
-
 
 -- PARTE C. GENERAR EL LOTE HACIA LA CENTRAL
 
@@ -404,7 +401,6 @@ END;
 /
 
 -- EXEC SP_GENERAR_LOTE(FN_SIGUIENTE_LOTE);
-
 
 -- PARTE D. APLICAR LA RESPUESTA DE LA CENTRAL
 

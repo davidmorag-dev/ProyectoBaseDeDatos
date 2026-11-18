@@ -1,7 +1,6 @@
 -- CENTRAL. Comprobar y operar. Se ejecuta cuantas veces haga falta.
 -- Un bloque a la vez (F9; los BEGIN ... END y los EXEC con F5).
 
-
 -- SECCION 1. COMPROBAR EL ESTADO DE LOS ENLACES (ONLINE u OFFLINE)
 
 SET SERVEROUTPUT ON
@@ -33,13 +32,14 @@ END;
 -- 3. SUC03 (por correo, sin enlace)
 PROMPT SUC03: CORREO (sin enlace directo)
 
-
 -- SECCION 2. SUC01 Y SUC02 CONECTADAS
 
 -- PARTE A. LA CENTRAL
 
 -- A1. Confirmar el usuario y el servicio
-SELECT USER AS usuario, SYS_CONTEXT('USERENV', 'SERVICE_NAME') AS servicio, SYS_CONTEXT('USERENV', 'SERVER_HOST') AS equipo FROM DUAL;
+SELECT USER AS usuario, SYS_CONTEXT('USERENV', 'SERVICE_NAME') AS servicio,
+       SYS_CONTEXT('USERENV', 'SERVER_HOST') AS equipo
+FROM DUAL;
 
 -- A2. Las 10 tablas del proyecto (debe devolver 10 filas)
 SELECT table_name FROM user_tables
@@ -56,8 +56,9 @@ UNION ALL SELECT 'FACTURA', COUNT(*) FROM FACTURA;
 
 -- A4. Procedimientos de la sincronizacion conectada (todos deben salir VALID)
 SELECT object_name, object_type, status FROM user_objects
-WHERE object_name IN ('SP_REGISTRAR_BITACORA', 'SP_CONSOLIDAR_CLIENTE', 'SP_ASIGNAR_BLOQUE', 'SP_APLICAR_SUBIDA',
-                      'SP_APLICAR_BAJADA', 'SP_CICLO_SYNC', 'SP_CAMBIAR_PRECIO')
+WHERE object_name IN ('SP_REGISTRAR_BITACORA', 'SP_CONSOLIDAR_CLIENTE', 'SP_ASIGNAR_BLOQUE',
+                      'SP_APLICAR_SUBIDA', 'SP_APLICAR_BAJADA', 'SP_CICLO_SYNC',
+                      'SP_CAMBIAR_PRECIO')
 ORDER BY object_name;
 
 -- A5. Objetos con errores (no debe devolver filas)
@@ -65,7 +66,6 @@ SELECT object_name, object_type, status FROM user_objects WHERE status <> 'VALID
 
 -- A6. Enlaces creados
 SELECT db_link, username, host FROM user_db_links;
-
 
 -- PARTE B. SUC01 (Ashly, Puntarenas)
 
@@ -88,23 +88,30 @@ WHERE destinoSalida = 'CENTRAL' GROUP BY tablaOrigenSalida, estadoSalida;
 EXEC SP_CICLO_SYNC('SUC01');
 
 -- B6. Resultado del ciclo de SUC01
-SELECT direccionBitacora, tablaAfectadaBitacora, fechaInicioBitacora, resultadoBitacora FROM BITACORA_SYNC
+SELECT direccionBitacora, tablaAfectadaBitacora, fechaInicioBitacora, resultadoBitacora
+FROM BITACORA_SYNC
 WHERE contraparteBitacora = 'SUC01' ORDER BY idBitacora DESC FETCH FIRST 10 ROWS ONLY;
 
 -- B7. Estado de SUC01 en la central
-SELECT codigoSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal FROM SUCURSAL WHERE idSucursal = 1;
+SELECT codigoSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal
+FROM SUCURSAL
+WHERE idSucursal = 1;
 
 -- B8. Clientes y facturas de SUC01 que ya llegaron a la central
 SELECT COUNT(*) AS clientesSuc01 FROM CLIENTE WHERE idSucursalOrigen = 1;
-SELECT idFactura, idClienteLocal, fechaEmisionFactura, totalFactura FROM FACTURA WHERE idSucursalEmisora = 1 ORDER BY idFactura;
+SELECT idFactura, idClienteLocal, fechaEmisionFactura, totalFactura
+FROM FACTURA
+WHERE idSucursalEmisora = 1
+ORDER BY idFactura;
 
 -- B9. Envios de la central hacia SUC01
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA
 WHERE destinoSalida = 'SUC01' GROUP BY tablaOrigenSalida, estadoSalida;
 
 -- B10. Trabajo automatico de SUC01
-SELECT job_name, enabled, state, last_start_date, next_run_date FROM user_scheduler_jobs WHERE job_name = 'JOB_SYNC_SUC01';
-
+SELECT job_name, enabled, state, last_start_date, next_run_date
+FROM user_scheduler_jobs
+WHERE job_name = 'JOB_SYNC_SUC01';
 
 -- PARTE C. SUC02 (Valeria, Alajuela)
 
@@ -127,23 +134,30 @@ WHERE destinoSalida = 'CENTRAL' GROUP BY tablaOrigenSalida, estadoSalida;
 EXEC SP_CICLO_SYNC('SUC02');
 
 -- C6. Resultado del ciclo de SUC02 (nunca ERROR)
-SELECT direccionBitacora, tablaAfectadaBitacora, fechaInicioBitacora, resultadoBitacora FROM BITACORA_SYNC
+SELECT direccionBitacora, tablaAfectadaBitacora, fechaInicioBitacora, resultadoBitacora
+FROM BITACORA_SYNC
 WHERE contraparteBitacora = 'SUC02' ORDER BY idBitacora DESC FETCH FIRST 10 ROWS ONLY;
 
 -- C7. Estado de SUC02 en la central
-SELECT codigoSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal FROM SUCURSAL WHERE idSucursal = 2;
+SELECT codigoSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal
+FROM SUCURSAL
+WHERE idSucursal = 2;
 
 -- C8. Clientes y facturas de SUC02 que ya llegaron a la central
 SELECT COUNT(*) AS clientesSuc02 FROM CLIENTE WHERE idSucursalOrigen = 2;
-SELECT idFactura, idClienteLocal, fechaEmisionFactura, totalFactura FROM FACTURA WHERE idSucursalEmisora = 2 ORDER BY idFactura;
+SELECT idFactura, idClienteLocal, fechaEmisionFactura, totalFactura
+FROM FACTURA
+WHERE idSucursalEmisora = 2
+ORDER BY idFactura;
 
 -- C9. Envios de la central hacia SUC02
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA
 WHERE destinoSalida = 'SUC02' GROUP BY tablaOrigenSalida, estadoSalida;
 
 -- C10. Trabajo automatico de SUC02
-SELECT job_name, enabled, state, last_start_date, next_run_date FROM user_scheduler_jobs WHERE job_name = 'JOB_SYNC_SUC02';
-
+SELECT job_name, enabled, state, last_start_date, next_run_date
+FROM user_scheduler_jobs
+WHERE job_name = 'JOB_SYNC_SUC02';
 
 -- PARTE D. SUC01 Y SUC02 JUNTAS
 
@@ -159,9 +173,9 @@ JOIN PRODUCTO@LNK_SUC02 suc02 ON suc02.idProducto = central.idProducto
 ORDER BY central.idProducto;
 
 -- D3. Bloques de facturas de cada sucursal
-SELECT idSucursal, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango FROM RANGO_FACTURA
+SELECT idSucursal, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango
+FROM RANGO_FACTURA
 WHERE idSucursal IN (1, 2) ORDER BY idSucursal, idRango;
-
 
 -- SECCION 3. ACTIVAR LA SINCRONIZACION AUTOMATICA (cada 5 minutos)
 
@@ -195,7 +209,6 @@ END;
 -- EXEC DBMS_SCHEDULER.DISABLE('JOB_SYNC_SUC01');
 -- SELECT job_name, enabled, last_start_date, next_run_date FROM USER_SCHEDULER_JOBS;
 
-
 -- SECCION 4. SUC03 POR CORREO
 
 -- PARTE E. LA CENTRAL LISTA PARA RECIBIR
@@ -204,19 +217,23 @@ END;
 SELECT USER AS usuario, SYS_CONTEXT('USERENV', 'SERVICE_NAME') AS servicio FROM DUAL;
 
 -- E2. SUC03 registrada en modo DIFERIDO
-SELECT idSucursal, codigoSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal FROM SUCURSAL WHERE idSucursal = 3;
+SELECT idSucursal, codigoSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal
+FROM SUCURSAL
+WHERE idSucursal = 3;
 
 -- E3. Bloque de facturas de SUC03 (del 2001 al 3000)
-SELECT idRango, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango FROM RANGO_FACTURA WHERE idSucursal = 3;
+SELECT idRango, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango
+FROM RANGO_FACTURA
+WHERE idSucursal = 3;
 
 -- E4. Procedimientos que usa el lote (todos deben salir VALID)
 SELECT object_name, object_type, status FROM user_objects
-WHERE object_name IN ('FN_CAMPO', 'FN_HUELLA', 'SP_PROCESAR_LOTE', 'SP_REGISTRAR_BITACORA', 'SP_CONSOLIDAR_CLIENTE', 'SP_ASIGNAR_BLOQUE')
+WHERE object_name IN ('FN_CAMPO', 'FN_HUELLA', 'SP_PROCESAR_LOTE', 'SP_REGISTRAR_BITACORA',
+                      'SP_CONSOLIDAR_CLIENTE', 'SP_ASIGNAR_BLOQUE')
 ORDER BY object_name;
 
 -- E5. Objetos con errores (no debe devolver filas)
 SELECT object_name, object_type, status FROM user_objects WHERE status <> 'VALID';
-
 
 -- PARTE F. LA CARPETA C:\sync
 
@@ -249,7 +266,6 @@ BEGIN
 END;
 /
 
-
 -- PARTE G. APLICAR EL LOTE
 
 -- G1. Conteos antes de aplicar
@@ -272,7 +288,10 @@ SELECT idEnvioRecibido, huellaRecibido, fechaRecepcionRecibido, resultadoRecibid
 WHERE origenRecibido = 'SUC03' ORDER BY idEnvioRecibido;
 
 -- G5. Facturas de SUC03 en la central
-SELECT idFactura, idClienteLocal, fechaEmisionFactura, totalFactura FROM FACTURA WHERE idSucursalEmisora = 3 ORDER BY idFactura;
+SELECT idFactura, idClienteLocal, fechaEmisionFactura, totalFactura
+FROM FACTURA
+WHERE idSucursalEmisora = 3
+ORDER BY idFactura;
 
 -- G6. Detalle de esas facturas
 SELECT d.idFactura, d.lineaDetalle, d.idProducto, d.cantidadDetalle, d.precioUnitarioDetalle
@@ -280,9 +299,9 @@ FROM DETALLE_FACTURA d JOIN FACTURA f ON f.idFactura = d.idFactura
 WHERE f.idSucursalEmisora = 3 ORDER BY d.idFactura, d.lineaDetalle;
 
 -- G7. Registro del lote aplicado (LOTE_APL debe salir OK)
-SELECT direccionBitacora, tablaAfectadaBitacora, fechaInicioBitacora, resultadoBitacora FROM BITACORA_SYNC
+SELECT direccionBitacora, tablaAfectadaBitacora, fechaInicioBitacora, resultadoBitacora
+FROM BITACORA_SYNC
 WHERE contraparteBitacora = 'SUC03' ORDER BY idBitacora DESC FETCH FIRST 10 ROWS ONLY;
-
 
 -- PARTE H. REPETIR EL MISMO LOTE
 
@@ -295,7 +314,6 @@ SELECT (SELECT COUNT(*) FROM CLIENTE WHERE idSucursalOrigen = 3) AS clientesSuc0
        (SELECT COUNT(*) FROM SYNC_RECIBIDO WHERE origenRecibido = 'SUC03') AS recibidosSuc03
 FROM DUAL;
 
-
 -- PARTE I. LA RESPUESTA HACIA SUC03
 
 -- I1. Procedimientos de la respuesta (todos deben salir VALID)
@@ -304,7 +322,9 @@ WHERE object_name IN ('FN_SERIALIZAR', 'FN_SIGUIENTE_RESPUESTA', 'SP_GENERAR_RES
 ORDER BY object_name;
 
 -- I2. Trabajo que genera la respuesta a las 9 p. m.
-SELECT job_name, enabled, state, next_run_date FROM user_scheduler_jobs WHERE job_name = 'JOB_RESPUESTA_SUC03';
+SELECT job_name, enabled, state, next_run_date
+FROM user_scheduler_jobs
+WHERE job_name = 'JOB_RESPUESTA_SUC03';
 
 -- I3. Lo que va en la respuesta
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA
@@ -327,20 +347,19 @@ WHERE destinoSalida = 'SUC03' GROUP BY tablaOrigenSalida, estadoSalida;
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA
 WHERE destinoSalida = 'SUC03' GROUP BY tablaOrigenSalida, estadoSalida;
 
-
 -- SECCION 5. CONSULTAS PARA LA DEMOSTRACION
 
-PROMPT === Estado de las sucursales ===
+PROMPT Estado de las sucursales
 SELECT codigoSucursal, modoSyncSucursal, estadoConexionSucursal,
        fechaUltimaSyncSucursal
 FROM SUCURSAL ORDER BY idSucursal;
 
-PROMPT === Facturas recibidas por sucursal ===
+PROMPT Facturas recibidas por sucursal
 SELECT idSucursalEmisora, COUNT(*) AS cantidadFacturas,
        SUM(totalFactura) AS totalVendido
 FROM FACTURA GROUP BY idSucursalEmisora ORDER BY idSucursalEmisora;
 
-PROMPT === Ventas por sucursal en un periodo ===
+PROMPT Ventas por sucursal en un periodo
 -- :desde y :hasta son fechas
 SELECT s.codigoSucursal AS sucursal, COUNT(*) AS facturas,
        SUM(f.totalFactura) AS totalVendido
@@ -350,25 +369,25 @@ WHERE f.fechaEmisionFactura >= :desde AND f.fechaEmisionFactura < :hasta
 GROUP BY s.codigoSucursal
 ORDER BY s.codigoSucursal;
 
-PROMPT === Envios centrales pendientes ===
+PROMPT Envios centrales pendientes
 SELECT destinoSalida, tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad
 FROM SYNC_SALIDA
 GROUP BY destinoSalida, tablaOrigenSalida, estadoSalida
 ORDER BY destinoSalida, tablaOrigenSalida, estadoSalida;
 
-PROMPT === Recepciones y descartes en CENTRAL ===
+PROMPT Recepciones y descartes en CENTRAL
 SELECT origenRecibido, resultadoRecibido, COUNT(*) AS cantidad
 FROM SYNC_RECIBIDO
 GROUP BY origenRecibido, resultadoRecibido
 ORDER BY origenRecibido, resultadoRecibido;
 
-PROMPT === Clientes duplicados detectados ===
+PROMPT Clientes duplicados detectados
 SELECT idSucursalOrigen, idClienteLocal,
        idSucursalCanonica, idClienteCanonico
 FROM CLIENTE_EQUIVALENCIA
 ORDER BY idSucursalOrigen, idClienteLocal;
 
-PROMPT === Comparacion de precios entre CENTRAL, SUC01 y SUC02 ===
+PROMPT Comparacion de precios entre CENTRAL, SUC01 y SUC02
 SELECT central.idProducto, central.precioActualProducto AS precioCentral,
        suc01.precioActualProducto AS precioSuc01,
        suc02.precioActualProducto AS precioSuc02

@@ -1,7 +1,6 @@
 -- SUC03. Se ejecuta una sola vez, en una base recien creada.
 -- Crea las tablas, el catalogo inicial y los datos propios de la sucursal.
 
-
 -- PARTE A. TABLAS
 
 CREATE TABLE SUCURSAL (
@@ -127,14 +126,16 @@ CREATE TABLE BITACORA_SYNC (
         CHECK (resultadoBitacora IN ('OK', 'ERROR', 'DESCARTADO', 'OMITIDO'))
 );
 
-
 -- PARTE B. CATALOGO INICIAL (copia de la central)
 
-INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal)
+INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal,
+                      estadoConexionSucursal, fechaUltimaSyncSucursal)
 VALUES (1, 'SUC01', 'Sucursal Puntarenas', 'CONECTADO', 'SIN_CONEXION', NULL);
-INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal)
+INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal,
+                      estadoConexionSucursal, fechaUltimaSyncSucursal)
 VALUES (2, 'SUC02', 'Sucursal Alajuela', 'CONECTADO', 'SIN_CONEXION', NULL);
-INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal)
+INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal,
+                      estadoConexionSucursal, fechaUltimaSyncSucursal)
 VALUES (3, 'SUC03', 'Sucursal Guanacaste', 'DIFERIDO', 'SIN_CONEXION', NULL);
 
 INSERT INTO PRODUCTO VALUES (1, 'Laptop 15 pulgadas', 450000, DATE '2026-11-01');
@@ -149,7 +150,6 @@ INSERT INTO PRODUCTO VALUES (9, 'Camara web HD', 22000, DATE '2026-11-01');
 INSERT INTO PRODUCTO VALUES (10, 'Router WiFi', 31000, DATE '2026-11-01');
 
 COMMIT;
-
 
 -- PARTE C. DATOS PROPIOS DE SUC03
 

@@ -1,7 +1,7 @@
--- SUC02. Sincronizacion: lo que genera los envios hacia la central. Se ejecuta despues de 1_instalar.sql.
+-- SUC02. Sincronizacion. Se ejecuta despues de 1_instalar.sql.
+-- Aqui se genera lo que la central recoge.
 -- Cada factura o cliente guardado deja un envio PENDIENTE en SYNC_SALIDA, aunque no haya red.
--- La central lo recoge por el enlace cuando ejecuta SP_CICLO_SYNC (ver CENTRAL/2_sincronizacion.sql).
-
+-- La central lo recoge por el enlace con SP_CICLO_SYNC (ver CENTRAL/2_sincronizacion.sql).
 
 -- PARTE A. FACTURAR Y BLOQUES DE NUMERACION
 
@@ -184,7 +184,6 @@ SHOW ERRORS PROCEDURE SP_RETIRAR_BLOQUE
 --   '[{"idProducto":1,"cantidad":1},{"idProducto":5,"cantidad":2}]',
 --   :idFactura);
 -- PRINT idFactura
-
 
 -- PARTE B. GUARDAR CLIENTES
 
