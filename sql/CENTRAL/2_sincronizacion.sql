@@ -1,4 +1,12 @@
--- Ejecutar solo en CENTRAL, despues de crear LNK_SUC01 y LNK_SUC02.
+-- CENTRAL. Sincronizacion con las sucursales. Se ejecuta despues de 1_instalar.sql.
+-- Antes de la parte B, como SYSTEM en XEPDB1:
+--   CREATE DIRECTORY DIR_SYNC AS 'C:\sync';
+--   GRANT READ, WRITE ON DIRECTORY DIR_SYNC TO CENTRAL;
+--   GRANT CREATE JOB TO CENTRAL;
+-- La parte C necesita que SUC01 y SUC02 sean alcanzables por la red; ejecutarla al final.
+
+
+-- PARTE A. SINCRONIZACION CONECTADA (SUC01 y SUC02)
 
 CREATE OR REPLACE PROCEDURE SP_REGISTRAR_BITACORA (
     pContraparte IN VARCHAR2,
@@ -483,3 +491,358 @@ SHOW ERRORS PROCEDURE SP_CAMBIAR_PRECIO
 -- EXEC SP_CICLO_SYNC('SUC01');
 -- EXEC SP_CICLO_SYNC('SUC02');
 -- EXEC SP_CAMBIAR_PRECIO(1, 455000);
+
+
+-- PARTE B. SINCRONIZACION POR CORREO (SUC03): RECIBIR EL LOTE
+
+-- Devuelve el campo pN de un texto
+CREATE OR REPLACE FUNCTION FN_CAMPO (
+    pTexto IN VARCHAR2,
+    pSeparador IN VARCHAR2,
+    pN IN NUMBER
+) RETURN VARCHAR2 AS
+BEGIN
+    RETURN REGEXP_SUBSTR(pTexto, '([^' || pSeparador || ']*)(' || pSeparador || '|$)',
+                         1, pN, NULL, 1);
+END;
+/
+SHOW ERRORS FUNCTION FN_CAMPO
+
+CREATE OR REPLACE FUNCTION FN_HUELLA (
+    pTexto IN VARCHAR2
+) RETURN VARCHAR2 AS
+    huellaActual VARCHAR2(64);
+BEGIN
+    SELECT RAWTOHEX(STANDARD_HASH(pTexto, 'SHA256')) INTO huellaActual FROM DUAL;
+    RETURN huellaActual;
+END;
+/
+SHOW ERRORS FUNCTION FN_HUELLA
+
+-- Lee el lote de una sucursal y lo aplica
+CREATE OR REPLACE PROCEDURE SP_PROCESAR_LOTE (
+    pArchivo IN VARCHAR2,
+    pOrigen IN VARCHAR2
+) AS
+    TYPE tLineas IS TABLE OF VARCHAR2(4000) INDEX BY PLS_INTEGER;
+    lineas tLineas;
+    archivo UTL_FILE.FILE_TYPE;
+    lineaActual VARCHAR2(4000);
+    cantidadLineas PLS_INTEGER := 0;
+    cantidadEnvios NUMBER := 0;
+    cantidadAplicados NUMBER := 0;
+    cantidadOmitidos NUMBER := 0;
+    fechaInicio DATE := SYSDATE;
+    idEnvioActual NUMBER;
+    tablaActual VARCHAR2(30);
+    claveActual VARCHAR2(60);
+    versionActual NUMBER;
+    datosActuales VARCHAR2(4000);
+    resultadoActual VARCHAR2(10);
+    existentes NUMBER;
+    idSucursalClienteActual NUMBER;
+    idClienteLocalActual NUMBER;
+    versionCentral NUMBER;
+    tipoActual VARCHAR2(10);
+    numeroActual VARCHAR2(30);
+    nombreActual VARCHAR2(120);
+    fechaActual DATE;
+    lineaDetalle VARCHAR2(200);
+    posicionDetalle NUMBER;
+BEGIN
+    archivo := UTL_FILE.FOPEN('DIR_SYNC', pArchivo, 'R', 32767);
+    BEGIN
+        LOOP
+            UTL_FILE.GET_LINE(archivo, lineaActual);
+            cantidadLineas := cantidadLineas + 1;
+            lineas(cantidadLineas) := lineaActual;
+        END LOOP;
+    EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
+    END;
+    UTL_FILE.FCLOSE(archivo);
+
+    -- Validar el lote
+    IF cantidadLineas = 0 OR FN_CAMPO(lineas(1), '\|', 1) <> 'ENC'
+       OR FN_CAMPO(lineas(1), '\|', 2) <> pOrigen THEN
+        RAISE_APPLICATION_ERROR(-20040, 'Encabezado del lote invalido');
+    END IF;
+    FOR i IN 2 .. cantidadLineas LOOP
+        IF FN_CAMPO(lineas(i), '\|', 1) = 'ENV' THEN
+            cantidadEnvios := cantidadEnvios + 1;
+            IF FN_HUELLA(FN_CAMPO(lineas(i), '\|', 6)) <> FN_CAMPO(lineas(i), '\|', 7) THEN
+                RAISE_APPLICATION_ERROR(-20041, 'Huella distinta en el envio ' ||
+                                        FN_CAMPO(lineas(i), '\|', 2));
+            END IF;
+        END IF;
+    END LOOP;
+    IF cantidadEnvios <> TO_NUMBER(FN_CAMPO(lineas(1), '\|', 5)) THEN
+        RAISE_APPLICATION_ERROR(-20042, 'El lote llego incompleto');
+    END IF;
+
+    -- Aplicar los envios
+    FOR i IN 2 .. cantidadLineas LOOP
+        IF FN_CAMPO(lineas(i), '\|', 1) = 'ENV' THEN
+            idEnvioActual := TO_NUMBER(FN_CAMPO(lineas(i), '\|', 2));
+            tablaActual := FN_CAMPO(lineas(i), '\|', 3);
+            claveActual := FN_CAMPO(lineas(i), '\|', 4);
+            versionActual := TO_NUMBER(FN_CAMPO(lineas(i), '\|', 5));
+            datosActuales := FN_CAMPO(lineas(i), '\|', 6);
+
+            SELECT COUNT(*) INTO existentes FROM SYNC_RECIBIDO
+            WHERE origenRecibido = pOrigen AND idEnvioRecibido = idEnvioActual;
+
+            IF existentes > 0 THEN
+                cantidadOmitidos := cantidadOmitidos + 1;
+            ELSE
+                resultadoActual := 'APLICADO';
+
+                IF tablaActual = 'CLIENTE' THEN
+                    idSucursalClienteActual := TO_NUMBER(SUBSTR(claveActual, 1, INSTR(claveActual, ':') - 1));
+                    idClienteLocalActual := TO_NUMBER(SUBSTR(claveActual, INSTR(claveActual, ':') + 1));
+                    tipoActual := FN_CAMPO(datosActuales, '~', 1);
+                    numeroActual := FN_CAMPO(datosActuales, '~', 2);
+                    nombreActual := FN_CAMPO(datosActuales, '~', 3);
+                    fechaActual := TO_DATE(FN_CAMPO(datosActuales, '~', 5), 'YYYY-MM-DD HH24:MI:SS');
+                    BEGIN
+                        SELECT versionCliente INTO versionCentral FROM CLIENTE
+                        WHERE idSucursalOrigen = idSucursalClienteActual
+                          AND idClienteLocal = idClienteLocalActual;
+                        IF versionActual > versionCentral THEN
+                            UPDATE CLIENTE SET
+                                tipoIdentificacionCliente = tipoActual,
+                                numeroIdentificacionCliente = numeroActual,
+                                nombreCliente = nombreActual,
+                                versionCliente = versionActual,
+                                fechaModificacionCliente = fechaActual
+                            WHERE idSucursalOrigen = idSucursalClienteActual
+                              AND idClienteLocal = idClienteLocalActual;
+                        ELSE
+                            resultadoActual := 'DESCARTADO';
+                        END IF;
+                    EXCEPTION WHEN NO_DATA_FOUND THEN
+                        INSERT INTO CLIENTE VALUES (
+                            idSucursalClienteActual, idClienteLocalActual, tipoActual,
+                            numeroActual, nombreActual, versionActual, fechaActual
+                        );
+                    END;
+                    IF resultadoActual = 'APLICADO' THEN
+                        SP_CONSOLIDAR_CLIENTE(claveActual, versionActual, tipoActual,
+                            numeroActual, idSucursalClienteActual, idClienteLocalActual);
+                    END IF;
+
+                ELSIF tablaActual = 'FACTURA' THEN
+                    INSERT INTO FACTURA VALUES (
+                        TO_NUMBER(claveActual),
+                        TO_NUMBER(FN_CAMPO(FN_CAMPO(datosActuales, '#', 1), '~', 1)),
+                        TO_NUMBER(FN_CAMPO(FN_CAMPO(datosActuales, '#', 1), '~', 2)),
+                        TO_NUMBER(FN_CAMPO(FN_CAMPO(datosActuales, '#', 1), '~', 3)),
+                        TO_DATE(FN_CAMPO(FN_CAMPO(datosActuales, '#', 1), '~', 4), 'YYYY-MM-DD HH24:MI:SS'),
+                        TO_NUMBER(FN_CAMPO(FN_CAMPO(datosActuales, '#', 1), '~', 5), '999999999990.00')
+                    );
+                    posicionDetalle := 2;
+                    LOOP
+                        lineaDetalle := FN_CAMPO(datosActuales, '#', posicionDetalle);
+                        EXIT WHEN lineaDetalle IS NULL;
+                        INSERT INTO DETALLE_FACTURA VALUES (
+                            TO_NUMBER(claveActual),
+                            TO_NUMBER(FN_CAMPO(lineaDetalle, '~', 1)),
+                            TO_NUMBER(FN_CAMPO(lineaDetalle, '~', 2)),
+                            TO_NUMBER(FN_CAMPO(lineaDetalle, '~', 3), '999999999990.00'),
+                            TO_NUMBER(FN_CAMPO(lineaDetalle, '~', 4), '999999999990.00')
+                        );
+                        posicionDetalle := posicionDetalle + 1;
+                    END LOOP;
+
+                ELSIF tablaActual = 'RANGO_FACTURA' THEN
+                    SP_ASIGNAR_BLOQUE(pOrigen);
+                ELSE
+                    RAISE_APPLICATION_ERROR(-20043, 'Tipo de envio no reconocido: ' || tablaActual);
+                END IF;
+
+                INSERT INTO SYNC_RECIBIDO (
+                    origenRecibido, idEnvioRecibido, huellaRecibido,
+                    fechaRecepcionRecibido, resultadoRecibido
+                ) VALUES (
+                    pOrigen, idEnvioActual, FN_CAMPO(lineas(i), '\|', 7), SYSDATE, resultadoActual
+                );
+                cantidadAplicados := cantidadAplicados + 1;
+            END IF;
+
+        ELSIF FN_CAMPO(lineas(i), '\|', 1) = 'ACK' THEN
+            UPDATE SYNC_SALIDA SET estadoSalida = 'APLICADO', fechaAplicacionSalida = SYSDATE
+            WHERE idSalida = TO_NUMBER(FN_CAMPO(lineas(i), '\|', 2))
+              AND destinoSalida = pOrigen AND estadoSalida <> 'APLICADO';
+        END IF;
+    END LOOP;
+
+    UPDATE SUCURSAL SET fechaUltimaSyncSucursal = SYSDATE WHERE codigoSucursal = pOrigen;
+    COMMIT;
+    SP_REGISTRAR_BITACORA(pOrigen, 'LOTE_APL', 'LOTE', fechaInicio,
+        CASE WHEN cantidadAplicados = 0 AND cantidadOmitidos > 0 THEN 'OMITIDO' ELSE 'OK' END);
+EXCEPTION WHEN OTHERS THEN
+    IF UTL_FILE.IS_OPEN(archivo) THEN UTL_FILE.FCLOSE(archivo); END IF;
+    ROLLBACK;
+    SP_REGISTRAR_BITACORA(pOrigen, 'LOTE_APL', 'LOTE', fechaInicio, 'ERROR');
+    RAISE;
+END;
+/
+SHOW ERRORS PROCEDURE SP_PROCESAR_LOTE
+
+-- EXEC SP_PROCESAR_LOTE('lote_SUC03_0001.txt', 'SUC03');
+
+
+-- PARTE B2. SINCRONIZACION POR CORREO (SUC03): GENERAR LA RESPUESTA
+
+CREATE OR REPLACE FUNCTION FN_SERIALIZAR (
+    pTabla IN VARCHAR2,
+    pClave IN VARCHAR2
+) RETURN VARCHAR2 AS
+    datosActuales VARCHAR2(4000);
+BEGIN
+    IF pTabla = 'PRODUCTO' THEN
+        SELECT descripcionProducto || '~' ||
+               TO_CHAR(precioActualProducto, 'FM999999999990.00') || '~' ||
+               TO_CHAR(fechaModificacionProducto, 'YYYY-MM-DD HH24:MI:SS')
+        INTO datosActuales
+        FROM PRODUCTO WHERE idProducto = TO_NUMBER(pClave);
+    ELSIF pTabla = 'CLIENTE' THEN
+        SELECT tipoIdentificacionCliente || '~' || numeroIdentificacionCliente || '~' ||
+               nombreCliente || '~' || versionCliente || '~' ||
+               TO_CHAR(fechaModificacionCliente, 'YYYY-MM-DD HH24:MI:SS')
+        INTO datosActuales
+        FROM CLIENTE
+        WHERE idSucursalOrigen = TO_NUMBER(SUBSTR(pClave, 1, INSTR(pClave, ':') - 1))
+          AND idClienteLocal = TO_NUMBER(SUBSTR(pClave, INSTR(pClave, ':') + 1));
+    ELSIF pTabla = 'RANGO_FACTURA' THEN
+        SELECT idSucursal || '~' || numeroInicialRango || '~' || numeroFinalRango || '~' ||
+               proximoNumeroRango || '~' || estadoRango
+        INTO datosActuales
+        FROM RANGO_FACTURA WHERE idRango = TO_NUMBER(pClave);
+    ELSE
+        RAISE_APPLICATION_ERROR(-20050, 'Tipo de envio no reconocido: ' || pTabla);
+    END IF;
+    RETURN datosActuales;
+END;
+/
+SHOW ERRORS FUNCTION FN_SERIALIZAR
+
+-- Numero de la proxima respuesta
+CREATE OR REPLACE FUNCTION FN_SIGUIENTE_RESPUESTA (
+    pDestino IN VARCHAR2
+) RETURN NUMBER AS
+    numeroRespuesta NUMBER;
+BEGIN
+    SELECT COUNT(*) + 1 INTO numeroRespuesta FROM BITACORA_SYNC
+    WHERE contraparteBitacora = pDestino
+      AND direccionBitacora = 'LOTE_GEN' AND resultadoBitacora = 'OK';
+    RETURN numeroRespuesta;
+END;
+/
+SHOW ERRORS FUNCTION FN_SIGUIENTE_RESPUESTA
+
+-- Escribe la respuesta para la sucursal
+CREATE OR REPLACE PROCEDURE SP_GENERAR_RESPUESTA (
+    pDestino IN VARCHAR2,
+    pNumero IN NUMBER
+) AS
+    archivo UTL_FILE.FILE_TYPE;
+    fechaInicio DATE := SYSDATE;
+    idMaximo NUMBER;
+    cantidadEnvios NUMBER;
+    modoActual VARCHAR2(10);
+    datosActuales VARCHAR2(4000);
+BEGIN
+    SELECT modoSyncSucursal INTO modoActual FROM SUCURSAL WHERE codigoSucursal = pDestino;
+    IF modoActual <> 'DIFERIDO' THEN
+        RAISE_APPLICATION_ERROR(-20051, 'Solo las sucursales en modo diferido reciben respuesta');
+    END IF;
+
+    SELECT NVL(MAX(idSalida), 0), COUNT(*) INTO idMaximo, cantidadEnvios
+    FROM SYNC_SALIDA
+    WHERE destinoSalida = pDestino AND estadoSalida IN ('PENDIENTE', 'ENVIADO');
+
+    archivo := UTL_FILE.FOPEN('DIR_SYNC',
+        'respuesta_' || pDestino || '_' || LPAD(pNumero, 4, '0') || '.txt', 'W', 32767);
+    UTL_FILE.PUT_LINE(archivo, 'ENC|CENTRAL|' || pNumero || '|' ||
+        TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS') || '|' || cantidadEnvios || '|' || pDestino);
+
+    FOR envio IN (
+        SELECT idSalida, tablaOrigenSalida, claveRegistroSalida, versionSalida
+        FROM SYNC_SALIDA
+        WHERE destinoSalida = pDestino AND idSalida <= idMaximo
+          AND estadoSalida IN ('PENDIENTE', 'ENVIADO')
+        ORDER BY idSalida
+    ) LOOP
+        datosActuales := FN_SERIALIZAR(envio.tablaOrigenSalida, envio.claveRegistroSalida);
+        UTL_FILE.PUT_LINE(archivo, 'ENV|' || envio.idSalida || '|' ||
+            envio.tablaOrigenSalida || '|' || envio.claveRegistroSalida || '|' ||
+            envio.versionSalida || '|' || datosActuales || '|' ||
+            FN_HUELLA(datosActuales));
+    END LOOP;
+
+    -- Acuses
+    FOR acuse IN (
+        SELECT idEnvioRecibido FROM SYNC_RECIBIDO
+        WHERE origenRecibido = pDestino ORDER BY idEnvioRecibido
+    ) LOOP
+        UTL_FILE.PUT_LINE(archivo, 'ACK|' || acuse.idEnvioRecibido);
+    END LOOP;
+    UTL_FILE.FCLOSE(archivo);
+
+    UPDATE SYNC_SALIDA SET estadoSalida = 'ENVIADO', fechaEnvioSalida = SYSDATE
+    WHERE destinoSalida = pDestino AND idSalida <= idMaximo
+      AND estadoSalida IN ('PENDIENTE', 'ENVIADO');
+    COMMIT;
+    SP_REGISTRAR_BITACORA(pDestino, 'LOTE_GEN', 'LOTE', fechaInicio, 'OK');
+EXCEPTION WHEN OTHERS THEN
+    IF UTL_FILE.IS_OPEN(archivo) THEN UTL_FILE.FCLOSE(archivo); END IF;
+    ROLLBACK;
+    SP_REGISTRAR_BITACORA(pDestino, 'LOTE_GEN', 'LOTE', fechaInicio, 'ERROR');
+    RAISE;
+END;
+/
+SHOW ERRORS PROCEDURE SP_GENERAR_RESPUESTA
+
+-- Genera la respuesta todos los dias a las 9 p. m.
+BEGIN
+    DBMS_SCHEDULER.CREATE_JOB(
+        job_name        => 'JOB_RESPUESTA_SUC03',
+        job_type        => 'PLSQL_BLOCK',
+        job_action      => 'BEGIN SP_GENERAR_RESPUESTA(''SUC03'', FN_SIGUIENTE_RESPUESTA(''SUC03'')); END;',
+        repeat_interval => 'FREQ=DAILY;BYHOUR=21;BYMINUTE=0;BYSECOND=0',
+        enabled         => TRUE);
+END;
+/
+
+-- EXEC SP_GENERAR_RESPUESTA('SUC03', FN_SIGUIENTE_RESPUESTA('SUC03'));
+
+
+-- PARTE C. ENLACES HACIA SUC01 Y SUC02 (pide IP, usuario y clave)
+
+SET VERIFY OFF
+ACCEPT hostSuc01 CHAR PROMPT 'IP o nombre de SUC01: '
+ACCEPT puertoSuc01 NUMBER DEFAULT 1521 PROMPT 'Puerto de SUC01 [1521]: '
+ACCEPT servicioSuc01 CHAR DEFAULT XEPDB1 PROMPT 'Servicio de SUC01 [XEPDB1]: '
+ACCEPT usuarioSuc01 CHAR PROMPT 'Usuario Oracle de SUC01: '
+ACCEPT claveSuc01 CHAR PROMPT 'Clave Oracle de SUC01: ' HIDE
+
+CREATE DATABASE LINK LNK_SUC01
+CONNECT TO &usuarioSuc01 IDENTIFIED BY "&claveSuc01"
+USING '//&hostSuc01:&puertoSuc01/&servicioSuc01';
+
+ACCEPT hostSuc02 CHAR PROMPT 'IP o nombre de SUC02: '
+ACCEPT puertoSuc02 NUMBER DEFAULT 1521 PROMPT 'Puerto de SUC02 [1521]: '
+ACCEPT servicioSuc02 CHAR DEFAULT XEPDB1 PROMPT 'Servicio de SUC02 [XEPDB1]: '
+ACCEPT usuarioSuc02 CHAR PROMPT 'Usuario Oracle de SUC02: '
+ACCEPT claveSuc02 CHAR PROMPT 'Clave Oracle de SUC02: ' HIDE
+
+CREATE DATABASE LINK LNK_SUC02
+CONNECT TO &usuarioSuc02 IDENTIFIED BY "&claveSuc02"
+USING '//&hostSuc02:&puertoSuc02/&servicioSuc02';
+
+SELECT 'SUC01' AS sucursal, COUNT(*) AS sucursales FROM SUCURSAL@LNK_SUC01
+UNION ALL
+SELECT 'SUC02', COUNT(*) FROM SUCURSAL@LNK_SUC02;
+
+UNDEFINE hostSuc01 puertoSuc01 servicioSuc01 usuarioSuc01 claveSuc01
+UNDEFINE hostSuc02 puertoSuc02 servicioSuc02 usuarioSuc02 claveSuc02

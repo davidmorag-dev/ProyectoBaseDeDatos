@@ -1,31 +1,31 @@
 # Scripts SQL
 
-| Carpeta | Se ejecuta en |
-|---|---|
-| Conjunto | Los 4 nodos (CENTRAL, SUC01, SUC02, SUC03) |
-| Central | Solo la central |
-| Sucursal | Las tres usan `2_catalogoInicialSucursal.sql` y cada una ejecuta solo su `3_datosSucXX.sql` |
+Una carpeta por computadora. Cada persona ejecuta solo los archivos de su carpeta.
 
-## Orden de carga inicial
+| Carpeta | Nodo | Modo | Archivos |
+|---|---|---|---|
+| `CENTRAL` | CENTRAL (David) | Coordinador | `1_instalar`, `2_sincronizacion`, `3_operar` |
+| `SUC01` | Puntarenas (Ashly) | Conectada | `1_instalar`, `2_operar` |
+| `SUC02` | Alajuela (Valeria) | Conectada | `1_instalar`, `2_operar` |
+| `SUC03` | Guanacaste (Fiorella) | Por correo | `1_instalar`, `2_sincronizacion`, `3_operar` |
 
-1. En los cuatro nodos: `Conjunto/1_crearTablas.sql`.
-2. En CENTRAL: `Central/2_datosCentral.sql`.
-3. En SUC01, SUC02 y SUC03: `Sucursal/2_catalogoInicialSucursal.sql`. Esta es una copia inicial del catalogo central para que puedan vender sin red; los cambios posteriores deben sincronizarse.
-4. En cada sucursal: su propio `Sucursal/3_datosSucXX.sql`, que carga solo su bloque, sus clientes y los envios pendientes hacia CENTRAL.
-5. En cada sucursal: `Sucursal/4_facturarVenta.sql` y `Sucursal/5_sincronizarSucursal.sql`.
-6. En CENTRAL: `Central/4_configurarEnlaces.sql`, cuando SUC01 y SUC02 ya tengan Oracle accesible por red. El script pide sus IP, usuarios y claves; no guardar claves en Git.
-   Para mostrar el estado de las dos conexiones antes y despues de sincronizar, ejecutar `Central/4b_verificarConexiones.sql` en CENTRAL. Se puede repetir; SUC03 aparece como modo correo.
-7. En CENTRAL: `Central/5_sincronizarCentral.sql`.
-8. En CENTRAL: `Central/5b_programarSincronizacion.sql` crea los trabajos que ejecutan `SP_CICLO_SYNC` cada 5 minutos para SUC01 y SUC02.
-9. Modo por correo (SUC03). Un administrador crea antes la carpeta `DIR_SYNC` en SUC03 y en CENTRAL.
-   - En SUC03: `Sucursal/6_generarPaqueteCorreo.sql`; `EXEC SP_GENERAR_LOTE(FN_SIGUIENTE_LOTE);` escribe el archivo `lote_SUC03_0001.txt`.
-   - Ese archivo se envia por correo y se guarda en la carpeta `DIR_SYNC` de CENTRAL.
-   - En CENTRAL: `Central/6_aplicarPaqueteCorreo.sql`; `EXEC SP_PROCESAR_LOTE('lote_SUC03_0001.txt', 'SUC03');` verifica el lote y lo aplica.
-   - En CENTRAL: `Central/7_generarRespuestaCorreo.sql`; `EXEC SP_GENERAR_RESPUESTA('SUC03', FN_SIGUIENTE_RESPUESTA('SUC03'));` escribe `respuesta_SUC03_0001.txt` con precios, clientes de otras sucursales, bloques nuevos y acuses. El trabajo `JOB_RESPUESTA_SUC03` la genera sola a las 9 p. m.
-   - Esa respuesta se envia por correo y se guarda en la carpeta `DIR_SYNC` de SUC03.
-   - En SUC03: `Sucursal/7_aplicarRespuestaCorreo.sql`; `EXEC SP_PROCESAR_RESPUESTA('respuesta_SUC03_0001.txt', 'SUC03');` la verifica y la aplica.
+## Que hace cada archivo
 
-Cada script de datos se ejecuta una sola vez en una base recien creada.
+- `1_instalar.sql`: se ejecuta una sola vez en una base recien creada. Crea las 10 tablas, carga los datos iniciales y, en las sucursales, los procedimientos para facturar y guardar clientes sin necesitar red.
+- `2_sincronizacion.sql`: todo lo que sincroniza. Es el archivo central del proyecto.
+  - CENTRAL: parte A, ciclo de sincronizacion conectada; parte B, recibir el lote de SUC03 y generar su respuesta; parte C, enlaces hacia SUC01 y SUC02 (pide IP, usuario y clave; no guardar claves en Git).
+  - SUC03: parte A, generar el lote hacia la central; parte B, aplicar la respuesta de la central.
+  - SUC01 y SUC02 no tienen este archivo: en modo conectado quien inicia la sincronizacion es la central.
+- `2_operar.sql` / `3_operar.sql`: comprobaciones y operaciones del dia a dia (facturar, ejecutar el ciclo, ver bitacora, activar el programador). Se ejecutan cuantas veces haga falta, un bloque a la vez.
+
+## Orden
+
+1. En los cuatro nodos: `1_instalar.sql`.
+2. En CENTRAL y SUC03, un administrador crea antes la carpeta `C:\sync`, el directorio `DIR_SYNC` y el permiso `CREATE JOB` (los comandos estan al inicio de cada `2_sincronizacion.sql`).
+3. En CENTRAL y SUC03: `2_sincronizacion.sql`. En CENTRAL la parte C se ejecuta al final, cuando SUC01 y SUC02 ya tienen Oracle accesible por red.
+4. En CENTRAL: `3_operar.sql`, seccion 1 para comprobar los enlaces, seccion 2 para el primer ciclo manual y seccion 3 para activar la sincronizacion automatica cada 5 minutos.
+
+## Operaciones frecuentes
 
 `SP_EMITIR_FACTURA` recibe los detalles como JSON. Ejemplo para SUC01:
 
@@ -50,8 +50,14 @@ EXEC SP_CICLO_SYNC('SUC01');
 EXEC SP_CICLO_SYNC('SUC02');
 ```
 
-La central recoge clientes y facturas pendientes, entrega cambios del catalogo y bloques nuevos. `SP_CAMBIAR_PRECIO(1, 455000)` cambia el precio central y deja un envio pendiente para cada sucursal. SUC03 usa el modo diferido: recibe lo mismo, pero en la respuesta por correo.
+La central recoge clientes y facturas pendientes, entrega cambios del catalogo y bloques nuevos. `SP_CAMBIAR_PRECIO(1, 455000)` cambia el precio central y deja un envio pendiente para cada sucursal.
 
-Despues de ambos ciclos, `Central/8_consultasDemostracion.sql` muestra facturas, envios pendientes, clientes equivalentes y precios de los dos enlaces conectados.
+Modo por correo (SUC03):
+
+1. SUC03 genera el lote con `EXEC SP_GENERAR_LOTE(FN_SIGUIENTE_LOTE);`, que escribe `lote_SUC03_0001.txt` (tambien lo hace solo `JOB_LOTE_SUC03` a las 8 p. m.).
+2. El archivo se envia por correo y se guarda en `C:\sync` de CENTRAL.
+3. CENTRAL lo verifica y lo aplica con `EXEC SP_PROCESAR_LOTE('lote_SUC03_0001.txt', 'SUC03');`.
+4. CENTRAL genera la respuesta con `EXEC SP_GENERAR_RESPUESTA('SUC03', FN_SIGUIENTE_RESPUESTA('SUC03'));` (tambien lo hace solo `JOB_RESPUESTA_SUC03` a las 9 p. m.). Lleva precios, clientes de otras sucursales, bloques nuevos y acuses.
+5. La respuesta se envia por correo, se guarda en `C:\sync` de SUC03 y se aplica con `EXEC SP_PROCESAR_RESPUESTA('respuesta_SUC03_0001.txt', 'SUC03');`.
 
 `PLAN_PRUEBAS.md` propone las diez pruebas de comportamiento y la evidencia que deben guardar para el informe.

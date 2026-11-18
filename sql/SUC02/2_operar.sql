@@ -1,5 +1,7 @@
--- Ejecutar en SUC01 o SUC02.
--- Un bloque a la vez (F9).
+-- SUC02. Comprobar y operar. Se ejecuta cuantas veces haga falta.
+-- La sincronizacion de las sucursales conectadas la inicia la CENTRAL (ver CENTRAL/2_sincronizacion.sql).
+-- Un bloque a la vez (F9; los EXEC con F5).
+
 
 -- 0. En cmd:
 --    ipconfig
@@ -48,9 +50,18 @@ SELECT origenRecibido, resultadoRecibido, COUNT(*) AS cantidad, MAX(fechaRecepci
 -- 11. Precios actuales
 SELECT idProducto, descripcionProducto, precioActualProducto, fechaModificacionProducto FROM PRODUCTO ORDER BY idProducto;
 
--- 12. Factura de prueba (en SUC02 usar 2, 2, 1)
+-- 12. Facturas de prueba (se quedan PENDIENTE hasta que la central ejecute el ciclo)
 VARIABLE idFactura NUMBER
-EXEC SP_EMITIR_FACTURA(1, 1, 1, '[{"idProducto":1,"cantidad":1}]', :idFactura);
+-- Maria Rojas Mora (tambien en SUC01): una laptop y dos mouse
+EXEC SP_EMITIR_FACTURA(2, 2, 1, '[{"idProducto":1,"cantidad":1},{"idProducto":5,"cantidad":2}]', :idFactura);
+PRINT idFactura
+
+-- Luis Araya Brenes: un monitor y un teclado
+EXEC SP_EMITIR_FACTURA(2, 2, 2, '[{"idProducto":3,"cantidad":1},{"idProducto":4,"cantidad":1}]', :idFactura);
+PRINT idFactura
+
+-- Sofia Mora Leon: un router
+EXEC SP_EMITIR_FACTURA(2, 2, 3, '[{"idProducto":10,"cantidad":1}]', :idFactura);
 PRINT idFactura
 
 -- 13. Ultimas facturas emitidas en esta sucursal

@@ -1,6 +1,7 @@
--- Ejecutar en SUC03.
--- Un bloque a la vez (F9).
+-- SUC03. Comprobar y operar. Se ejecuta cuantas veces haga falta.
+-- Un bloque a la vez (F9; los BEGIN ... END y los EXEC con F5).
 SET SERVEROUTPUT ON
+
 
 -- 1. Confirmar el usuario y el servicio
 SELECT USER AS usuario, SYS_CONTEXT('USERENV', 'SERVICE_NAME') AS servicio, SYS_CONTEXT('USERENV', 'SERVER_HOST') AS equipo FROM DUAL;
@@ -50,9 +51,14 @@ SELECT privilege FROM user_sys_privs WHERE privilege = 'CREATE JOB';
 -- 10. Trabajo que genera el lote a las 8 p. m.
 SELECT job_name, enabled, state, next_run_date FROM user_scheduler_jobs;
 
--- 11. Factura de prueba para tener algo que mandar
+-- 11. Facturas de prueba para tener algo que mandar
 VARIABLE idFactura NUMBER
-EXEC SP_EMITIR_FACTURA(3, 3, 1, '[{"idProducto":1,"cantidad":1}]', :idFactura);
+-- Jorge Castro Perez: un SSD y una memoria USB
+EXEC SP_EMITIR_FACTURA(3, 3, 1, '[{"idProducto":7,"cantidad":1},{"idProducto":8,"cantidad":2}]', :idFactura);
+PRINT idFactura
+
+-- Laura Solis Vega: unos audifonos y una camara web
+EXEC SP_EMITIR_FACTURA(3, 3, 2, '[{"idProducto":6,"cantidad":1},{"idProducto":9,"cantidad":1}]', :idFactura);
 PRINT idFactura
 
 -- 12. Envios pendientes hacia CENTRAL
