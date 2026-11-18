@@ -18,7 +18,7 @@ SELECT 'SUC02' AS nodo, tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FR
 -- 5. sincronizar
 EXEC SP_CICLO_SYNC('SUC01');
 EXEC SP_CICLO_SYNC('SUC02');
-
+EXEC SP_CICLO_SYNC('SUC01');
 -- 6. bitacora (SUBIDA y BAJADA deben salir OK, DESCARTADO u OMITIDO, nunca ERROR)
 SELECT contraparteBitacora, direccionBitacora, tablaAfectadaBitacora, resultadoBitacora FROM BITACORA_SYNC ORDER BY idBitacora DESC;
 

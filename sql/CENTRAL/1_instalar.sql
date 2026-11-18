@@ -2,7 +2,6 @@
 -- Crea las 10 tablas y carga las sucursales, los productos y los bloques de facturas.
 
 -- PARTE A. TABLAS
-
 CREATE TABLE SUCURSAL (
     idSucursal NUMBER(3) PRIMARY KEY,
     codigoSucursal VARCHAR2(10) NOT NULL UNIQUE,
