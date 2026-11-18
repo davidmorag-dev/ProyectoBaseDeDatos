@@ -1,0 +1,76 @@
+CONEXION DE LA CENTRAL CON SUC01 Y SUC02 (DAVID)
+
+Este archivo va en la carpeta CENTRAL/sincronizacion, junto a 4_enlaces.sql.
+
+
+LO QUE NECESITAS DE CADA SUCURSAL (te lo mandan por privado)
+
+SUC01 (Ashly):   IP, usuario Oracle y clave
+SUC02 (Valeria): IP, usuario Oracle y clave
+
+El servicio (XEPDB1) y el puerto (1521) son siempre los mismos.
+No pegar las claves en el grupo ni en Git.
+
+
+PASO 1. ESTAR EN EL MISMO HOTSPOT (PowerShell, no hace falta administrador)
+
+ipconfig
+
+Tu IPv4 del Wi-Fi debe empezar igual que la de ellas (por ejemplo 10.212.58.xxx).
+
+
+PASO 2. PROBAR EL PUERTO DE CADA SUCURSAL
+
+Cambiar IP_DE_SUC01 e IP_DE_SUC02 por las IP reales, sin comillas:
+
+Test-NetConnection IP_DE_SUC01 -Port 1521
+Test-NetConnection IP_DE_SUC02 -Port 1521
+
+Cada una debe decir TcpTestSucceeded : True (la ventana azul tarda unos segundos).
+Si alguna da False, no seguir: esa sucursal debe repetir los pasos 2, 3 y 4 de su conexion.txt
+(firewall, reiniciar el listener y cambiar 127.0.0.1 por 0.0.0.0).
+
+
+PASO 3. CREAR LOS ENLACES (SQL Developer, conectado a CENTRAL)
+
+Abrir sincronizacion/4_enlaces.sql y ejecutarlo completo con F5.
+Va a pedir estos datos, uno por uno, primero para SUC01 y despues para SUC02:
+
+IP o nombre de SUC01:        la IP de Ashly
+Puerto [1521]:               Enter
+Servicio [XEPDB1]:           Enter
+Usuario Oracle de SUC01:     el usuario de Ashly
+Clave Oracle de SUC01:       la clave de Ashly
+
+(igual para SUC02 con los datos de Valeria)
+
+Debe mostrar:
+  Database link LNK_SUC01 creado.
+  Database link LNK_SUC02 creado.
+  y una tabla con 3 y 3.
+
+Si dice que el enlace ya existe, ejecutar esto y volver a correr el archivo:
+  DROP DATABASE LINK LNK_SUC01;
+  DROP DATABASE LINK LNK_SUC02;
+
+
+PASO 4. PROBAR LOS ENLACES (3_operar.sql, bloque 2)
+
+SELECT 1 FROM DUAL@LNK_SUC01;
+SELECT 1 FROM DUAL@LNK_SUC02;
+
+Cada una debe devolver 1.
+Si da ORA-01017 el usuario o la clave estan mal: DROP DATABASE LINK y repetir el paso 3.
+Si da ORA-12541 o ORA-12514 el listener de esa sucursal no esta bien: repetir su paso 3.
+
+
+PASO 5. AVISARLES
+
+Decirles a Ashly y Valeria que ejecuten los bloques 4, 5 y 6 de su 3_operar.sql (facturas de prueba).
+Cuando terminen, seguir con 3_operar.sql de CENTRAL:
+
+  Bloques 3 y 4: estado de las sucursales y lo pendiente de cada una (antes de sincronizar)
+  Bloque 5:      EXEC SP_CICLO_SYNC('SUC01'); EXEC SP_CICLO_SYNC('SUC02'); y otra vez EXEC SP_CICLO_SYNC('SUC01');
+  Bloques 6 a 11: comprobar el resultado
+
+Despues avisarles que ejecuten los bloques 7 y 8 de su 3_operar.sql.

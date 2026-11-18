@@ -1,0 +1,79 @@
+CONEXION DE SUC02 (VALERIA) CON LA CENTRAL
+
+Hacer esto en la computadora de SUC02, ya conectada al Wi-Fi del hotspot de David.
+Abrir PowerShell como administrador (clic derecho en PowerShell, "Ejecutar como administrador").
+Copiar y pegar cada comando, uno por uno.
+
+
+PASO 1. VER LA DIRECCION IP
+
+ipconfig
+
+Anotar la "Direccion IPv4" del adaptador "Wi-Fi" (por ejemplo 10.212.58.104).
+No usar la de VirtualBox ni la de otro adaptador virtual.
+
+
+PASO 2. ABRIR EL PUERTO 1521 EN EL FIREWALL (solo la primera vez; si dice que ya existe, seguir)
+
+netsh advfirewall firewall add rule name="Oracle1521" dir=in action=allow protocol=TCP localport=1521
+
+
+PASO 3. REINICIAR EL LISTENER
+
+lsnrctl stop
+lsnrctl start
+lsnrctl status
+
+Esperar 1 minuto y volver a ejecutar:
+
+lsnrctl status
+
+Debe aparecer el servicio xepdb1 con estado READY.
+En "Resumen de puntos finales" la direccion NO debe ser HOST=127.0.0.1.
+Si es 127.0.0.1, hacer el paso 4. Si no, saltar al paso 5.
+
+
+PASO 4. (SOLO SI SALIO 127.0.0.1) CAMBIAR EL LISTENER
+
+1. En la salida de "lsnrctl status" buscar la linea "Archivo de parametros del Listener". Esa es la ruta del listener.ora.
+2. Abrirlo con el Bloc de notas (cambiar RUTA por la ruta que salio):
+
+notepad RUTA
+
+3. Buscar la linea que tiene (PROTOCOL = TCP)(HOST = 127.0.0.1)(PORT = 1521)
+4. Cambiar 127.0.0.1 por 0.0.0.0 y guardar. No tocar la linea de IPC ni EXTPROC.
+5. Repetir el paso 3 (reiniciar el listener).
+
+Si despues de 2 minutos no aparece xepdb1, ejecutar:
+
+sqlplus / as sysdba
+
+Y dentro de SQL*Plus:
+
+ALTER SYSTEM REGISTER;
+EXIT
+
+
+PASO 5. COMPROBAR QUE ORACLE ESTA CORRIENDO
+
+Get-Service Oracle*
+
+OracleServiceXE y el TNSListener deben decir Running.
+
+
+PASO 6. MANDARLE A DAVID (POR MENSAJE PRIVADO, NO AL GRUPO Y NO A GIT)
+
+- La IP del paso 1
+- El usuario Oracle de SUC02 (el que usa en SQL Developer)
+- La clave de ese usuario
+
+El servicio (XEPDB1) y el puerto (1521) ya los sabe David.
+
+
+PASO 7. ESPERAR A DAVID
+
+No cambiar de red ni reiniciar la computadora mientras David crea el enlace.
+Cuando David avise que el enlace funciona:
+
+En SQL Developer, conectada a SUC02, abrir 3_operar.sql y ejecutar los bloques 4, 5 y 6.
+Cuando David avise que ya ejecuto el ciclo, ejecutar los bloques 7 y 8.
