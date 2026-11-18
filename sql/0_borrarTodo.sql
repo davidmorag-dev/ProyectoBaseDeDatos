@@ -50,3 +50,8 @@ WHERE table_name IN ('BITACORA_SYNC', 'SYNC_RECIBIDO', 'SYNC_SALIDA', 'DETALLE_F
 UNION ALL SELECT 'procedimientos y funciones', COUNT(*) FROM user_objects WHERE object_type IN ('PROCEDURE', 'FUNCTION')
 UNION ALL SELECT 'enlaces', COUNT(*) FROM user_db_links
 UNION ALL SELECT 'trabajos programados', COUNT(*) FROM user_scheduler_jobs;
+
+
+DROP DATABASE LINK LNK_SUC01;
+DROP DATABASE LINK LNK_SUC02;
+
