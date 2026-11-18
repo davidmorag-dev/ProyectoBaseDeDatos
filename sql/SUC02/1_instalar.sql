@@ -128,15 +128,9 @@ CREATE TABLE BITACORA_SYNC (
 
 -- PARTE B. CATALOGO INICIAL (copia de la central)
 
-INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal,
-                      estadoConexionSucursal, fechaUltimaSyncSucursal)
-VALUES (1, 'SUC01', 'Sucursal Puntarenas', 'CONECTADO', 'SIN_CONEXION', NULL);
-INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal,
-                      estadoConexionSucursal, fechaUltimaSyncSucursal)
-VALUES (2, 'SUC02', 'Sucursal Alajuela', 'CONECTADO', 'SIN_CONEXION', NULL);
-INSERT INTO SUCURSAL (idSucursal, codigoSucursal, nombreSucursal, modoSyncSucursal,
-                      estadoConexionSucursal, fechaUltimaSyncSucursal)
-VALUES (3, 'SUC03', 'Sucursal Guanacaste', 'DIFERIDO', 'SIN_CONEXION', NULL);
+INSERT INTO SUCURSAL VALUES (1, 'SUC01', 'Sucursal Puntarenas', 'CONECTADO', 'SIN_CONEXION', NULL);
+INSERT INTO SUCURSAL VALUES (2, 'SUC02', 'Sucursal Alajuela', 'CONECTADO', 'SIN_CONEXION', NULL);
+INSERT INTO SUCURSAL VALUES (3, 'SUC03', 'Sucursal Guanacaste', 'DIFERIDO', 'SIN_CONEXION', NULL);
 
 INSERT INTO PRODUCTO VALUES (1, 'Laptop 15 pulgadas', 450000, DATE '2026-11-01');
 INSERT INTO PRODUCTO VALUES (2, 'Computadora de escritorio', 380000, DATE '2026-11-01');
