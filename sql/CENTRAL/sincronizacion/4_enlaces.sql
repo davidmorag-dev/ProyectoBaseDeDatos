@@ -2,6 +2,15 @@
 -- Se ejecuta al final, cuando las dos sucursales ya tienen Oracle accesible por la red.
 
 SET VERIFY OFF
+
+-- 0. si los enlaces ya existen se borran para crearlos de nuevo (la primera vez no hace nada)
+BEGIN
+    FOR l IN (SELECT db_link FROM user_db_links WHERE db_link IN ('LNK_SUC01', 'LNK_SUC02')) LOOP
+        EXECUTE IMMEDIATE 'DROP DATABASE LINK ' || l.db_link;
+    END LOOP;
+END;
+/
+
 ACCEPT hostSuc01 CHAR PROMPT 'IP o nombre de SUC01: '
 ACCEPT puertoSuc01 NUMBER DEFAULT 1521 PROMPT 'Puerto de SUC01 [1521]: '
 ACCEPT servicioSuc01 CHAR DEFAULT XEPDB1 PROMPT 'Servicio de SUC01 [XEPDB1]: '
