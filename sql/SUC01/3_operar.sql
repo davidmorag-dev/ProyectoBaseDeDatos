@@ -32,7 +32,7 @@ SELECT idFactura, idClienteLocal, totalFactura FROM FACTURA ORDER BY idFactura;
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY tablaOrigenSalida, estadoSalida;
 
 -- 6. guardar un cliente nuevo (queda pendiente para la central)
-EXEC SP_GUARDAR_CLIENTE(1, 4, 'CEDULA', '404440444', 'Nuevo Cliente');
+EXEC SP_GUARDAR_CLIENTE(1, 4, 'CEDULA', '112233445', 'Nuevo Cliente');
 
 -- 7. despues del ciclo de la central: los envios deben salir APLICADO
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY tablaOrigenSalida, estadoSalida;
