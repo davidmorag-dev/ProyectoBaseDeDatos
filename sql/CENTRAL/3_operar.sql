@@ -81,3 +81,11 @@ SELECT COUNT(*) AS facturasSuc03 FROM FACTURA WHERE idSucursalEmisora = 3;
 -- 18. generar la respuesta para SUC03 (queda en C:\sync y se envia por correo)
 EXEC SP_GENERAR_PAQUETE('CENTRAL', 'SUC03', FN_SIGUIENTE_PAQUETE('SUC03'));
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA WHERE destinoSalida = 'SUC03' GROUP BY tablaOrigenSalida, estadoSalida;
+
+-- 19. pantalla de seguimiento (solo la central): lo que se movio con cada nodo, lo mas reciente primero
+SELECT contraparteBitacora AS nodo, direccionBitacora AS direccion, tablaAfectadaBitacora AS tabla,
+    resultadoBitacora AS resultado, TO_CHAR(fechaFinBitacora, 'YYYY-MM-DD HH24:MI:SS') AS fecha
+FROM BITACORA_SYNC ORDER BY idBitacora DESC;
+-- resumen por nodo y direccion
+SELECT contraparteBitacora AS nodo, direccionBitacora AS direccion, resultadoBitacora AS resultado, COUNT(*) AS cantidad
+FROM BITACORA_SYNC GROUP BY contraparteBitacora, direccionBitacora, resultadoBitacora ORDER BY 1, 2, 3;
