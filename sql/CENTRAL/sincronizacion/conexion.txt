@@ -71,6 +71,6 @@ Cuando terminen, seguir con 3_operar.sql de CENTRAL:
 
   Bloques 2 y 4: estado de las sucursales y lo pendiente de cada una (antes de sincronizar)
   Bloque 5:      EXEC SP_CICLO_SYNC('SUC01'); EXEC SP_CICLO_SYNC('SUC02'); y otra vez EXEC SP_CICLO_SYNC('SUC01');
-  Bloques 6 y 7, y 14 a 18: comprobar el resultado
+  Bloques 6 y 7, y 15 a 19: comprobar el resultado
 
 Despues avisarles que ejecuten los bloques 7 y 8 de su 3_operar.sql.

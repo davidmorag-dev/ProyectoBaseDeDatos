@@ -1,5 +1,5 @@
 -- SUC03. Pruebas de comportamiento del modo por correo. Se ejecuta despues de 3_operar.sql.
--- Un bloque a la vez (F9, y los EXEC con F5). Los pasos de la central estan en CENTRAL/3_operar.sql, bloques 10 a 13.
+-- Un bloque a la vez (F9, y los EXEC con F5). Los pasos de la central estan en CENTRAL/3_operar.sql, bloques 10 a 14.
 SET SERVEROUTPUT ON
 
 ------------------------------------------------------------
@@ -41,9 +41,9 @@ EXEC SP_GENERAR_PAQUETE('SUC03', 'CENTRAL', FN_SIGUIENTE_PAQUETE('CENTRAL'));
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY tablaOrigenSalida, estadoSalida;
 
 -- b) hacer una copia del lote y cambiarle una letra a mano con el Bloc de notas (por ejemplo lote_SUC03_alterado.txt)
--- c) EN CENTRAL: aplicar la copia alterada. Debe dar ORA-20041 y la bitacora anota ERROR; no se aplica nada
+-- c) EN CENTRAL (3_operar.sql, bloque 11): aplicar la copia alterada. Debe dar ORA-20041 y la bitacora anota ERROR; no se aplica nada
 --    EXEC SP_PROCESAR_PAQUETE('lote_SUC03_alterado.txt', 'SUC03', 'CENTRAL');
--- d) EN CENTRAL: aplicar el lote integro. Debe quedar OK
+-- d) EN CENTRAL (3_operar.sql, bloque 12): aplicar el lote integro. Debe quedar OK
 --    EXEC SP_PROCESAR_PAQUETE('lote_SUC03_0001.txt', 'SUC03', 'CENTRAL');
 
 ------------------------------------------------------------
@@ -55,7 +55,7 @@ SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GR
 ------------------------------------------------------------
 -- PRUEBA 6. ACUSE: la respuesta de la central marca los envios como APLICADO
 ------------------------------------------------------------
--- EN CENTRAL: generar la respuesta (CENTRAL/3_operar.sql, bloque 13) y pasarla a C:\sync de SUC03 por correo
+-- EN CENTRAL: generar la respuesta (CENTRAL/3_operar.sql, bloque 14) y pasarla a C:\sync de SUC03 por correo
 EXEC SP_PROCESAR_PAQUETE('respuesta_SUC03_0001.txt', 'CENTRAL', 'SUC03');
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY tablaOrigenSalida, estadoSalida;
 SELECT origenRecibido, resultadoRecibido, COUNT(*) AS cantidad FROM SYNC_RECIBIDO GROUP BY origenRecibido, resultadoRecibido;
