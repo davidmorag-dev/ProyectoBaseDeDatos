@@ -54,7 +54,7 @@ Si dice que el enlace ya existe, ejecutar esto y volver a correr el archivo:
   DROP DATABASE LINK LNK_SUC02;
 
 
-PASO 4. PROBAR LOS ENLACES (3_operar.sql, bloque 2)
+PASO 4. PROBAR LOS ENLACES (3_operar.sql, bloque 3)
 
 SELECT 1 FROM DUAL@LNK_SUC01;
 SELECT 1 FROM DUAL@LNK_SUC02;
@@ -69,8 +69,8 @@ PASO 5. AVISARLES
 Decirles a Ashly y Valeria que ejecuten los bloques 4, 5 y 6 de su 3_operar.sql (facturas de prueba).
 Cuando terminen, seguir con 3_operar.sql de CENTRAL:
 
-  Bloques 3 y 4: estado de las sucursales y lo pendiente de cada una (antes de sincronizar)
+  Bloques 2 y 4: estado de las sucursales y lo pendiente de cada una (antes de sincronizar)
   Bloque 5:      EXEC SP_CICLO_SYNC('SUC01'); EXEC SP_CICLO_SYNC('SUC02'); y otra vez EXEC SP_CICLO_SYNC('SUC01');
-  Bloques 6 a 11: comprobar el resultado
+  Bloques 6 y 7, y 14 a 18: comprobar el resultado
 
 Despues avisarles que ejecuten los bloques 7 y 8 de su 3_operar.sql.

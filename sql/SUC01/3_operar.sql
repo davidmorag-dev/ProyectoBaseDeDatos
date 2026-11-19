@@ -2,6 +2,9 @@
 -- La sincronizacion la inicia la CENTRAL con SP_CICLO_SYNC; aqui se ve lo que queda pendiente y lo que se aplico.
 SET SERVEROUTPUT ON
 
+------------------------------------------------------------
+-- PARTE A. VERIFICACION Y DATOS INICIALES
+------------------------------------------------------------
 -- 1. objetos con errores (no debe devolver filas)
 SELECT object_name, object_type, status FROM user_objects WHERE status <> 'VALID';
 
@@ -13,6 +16,9 @@ UNION ALL SELECT 'FACTURA', COUNT(*) FROM FACTURA;
 -- 3. bloque de numeracion propio
 SELECT idRango, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango FROM RANGO_FACTURA;
 
+------------------------------------------------------------
+-- PARTE B. ANTES DE QUE LA CENTRAL SINCRONICE (facturar y dejar envios PENDIENTE)
+------------------------------------------------------------
 -- 4. facturar (funciona aunque la central este apagada). El detalle va como producto:cantidad;producto:cantidad
 VARIABLE idFactura NUMBER
 -- Maria Rojas Mora
@@ -34,6 +40,9 @@ SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GR
 -- 6. guardar un cliente nuevo (queda pendiente para la central)
 EXEC SP_GUARDAR_CLIENTE(1, 4, 'CEDULA', '112233445', 'Nuevo Cliente');
 
+------------------------------------------------------------
+-- PARTE C. DESPUES DEL CICLO DE LA CENTRAL (envios APLICADO y lo que se recibio)
+------------------------------------------------------------
 -- 7. despues del ciclo de la central: los envios deben salir APLICADO
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY tablaOrigenSalida, estadoSalida;
 

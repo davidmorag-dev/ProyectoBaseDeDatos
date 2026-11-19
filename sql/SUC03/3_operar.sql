@@ -1,6 +1,9 @@
 -- SUC03. Comprobar y operar. Se ejecuta cuantas veces haga falta, un bloque a la vez (F9, y los EXEC con F5).
 SET SERVEROUTPUT ON
 
+------------------------------------------------------------
+-- PARTE A. VERIFICACION Y DATOS INICIALES
+------------------------------------------------------------
 -- 1. objetos con errores (no debe devolver filas)
 SELECT object_name, object_type, status FROM user_objects WHERE status <> 'VALID';
 
@@ -12,6 +15,9 @@ UNION ALL SELECT 'FACTURA', COUNT(*) FROM FACTURA;
 -- 3. bloque de numeracion propio
 SELECT idRango, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango FROM RANGO_FACTURA;
 
+------------------------------------------------------------
+-- PARTE B. ANTES DE ENVIAR (facturar y dejar envios PENDIENTE)
+------------------------------------------------------------
 -- 4. facturar (funciona aunque la central este apagada). El detalle va como producto:cantidad;producto:cantidad
 VARIABLE idFactura NUMBER
 -- Jorge Castro Perez
@@ -29,6 +35,9 @@ SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GR
 -- 6. guardar un cliente nuevo (queda pendiente para la central)
 EXEC SP_GUARDAR_CLIENTE(3, 3, 'CEDULA', '909990999', 'Mario Salas Arce');
 
+------------------------------------------------------------
+-- PARTE C. CORREO: generar el lote y aplicar la respuesta de la central
+------------------------------------------------------------
 -- 7. carpeta del correo (debe devolver C:\sync)
 SELECT directory_name, directory_path FROM all_directories WHERE directory_name = 'DIR_SYNC';
 
@@ -45,6 +54,9 @@ EXEC SP_PROCESAR_PAQUETE('respuesta_SUC03_0001.txt', 'CENTRAL', 'SUC03');
 EXEC SP_PROCESAR_PAQUETE('respuesta_SUC03_0001.txt', 'CENTRAL', 'SUC03');
 SELECT origenRecibido, resultadoRecibido, COUNT(*) AS cantidad FROM SYNC_RECIBIDO GROUP BY origenRecibido, resultadoRecibido;
 
+------------------------------------------------------------
+-- PARTE D. LO QUE ENTREGO LA CENTRAL
+------------------------------------------------------------
 -- 12. precios y clientes recibidos
 SELECT idProducto, precioActualProducto FROM PRODUCTO ORDER BY idProducto;
 SELECT idSucursalOrigen, COUNT(*) AS clientes FROM CLIENTE GROUP BY idSucursalOrigen;

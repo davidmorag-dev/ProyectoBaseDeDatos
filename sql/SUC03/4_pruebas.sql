@@ -1,5 +1,5 @@
 -- SUC03. Pruebas de comportamiento del modo por correo. Se ejecuta despues de 3_operar.sql.
--- Un bloque a la vez (F9, y los EXEC con F5). Los pasos de la central estan en CENTRAL/3_operar.sql, bloques 15 a 18.
+-- Un bloque a la vez (F9, y los EXEC con F5). Los pasos de la central estan en CENTRAL/3_operar.sql, bloques 10 a 13.
 SET SERVEROUTPUT ON
 
 ------------------------------------------------------------
@@ -55,7 +55,7 @@ SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GR
 ------------------------------------------------------------
 -- PRUEBA 6. ACUSE: la respuesta de la central marca los envios como APLICADO
 ------------------------------------------------------------
--- EN CENTRAL: generar la respuesta (CENTRAL/3_operar.sql, bloque 18) y pasarla a C:\sync de SUC03 por correo
+-- EN CENTRAL: generar la respuesta (CENTRAL/3_operar.sql, bloque 13) y pasarla a C:\sync de SUC03 por correo
 EXEC SP_PROCESAR_PAQUETE('respuesta_SUC03_0001.txt', 'CENTRAL', 'SUC03');
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY tablaOrigenSalida, estadoSalida;
 SELECT origenRecibido, resultadoRecibido, COUNT(*) AS cantidad FROM SYNC_RECIBIDO GROUP BY origenRecibido, resultadoRecibido;
