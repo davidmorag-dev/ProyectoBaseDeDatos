@@ -100,6 +100,20 @@ EXEC SP_CICLO_SYNC('SUC01');
 SELECT idRango, idSucursal, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango FROM RANGO_FACTURA ORDER BY idRango;
 
 ------------------------------------------------------------
+-- PRUEBA 7. CAMBIOS FUERA DE ORDEN (SUC03): la version mas nueva se conserva aunque el lote viejo llegue despues
+------------------------------------------------------------
+-- SUC03 genera dos lotes con el mismo cliente (SUC03/4_pruebas.sql, prueba 7). Cambiar los numeros por los que lleguen a C:\sync
+-- a) primero el lote mas nuevo (numero mas alto) y despues el viejo
+EXEC SP_PROCESAR_PAQUETE('lote_SUC03_0005.txt', 'SUC03', 'CENTRAL');
+
+EXEC SP_PROCESAR_PAQUETE('lote_SUC03_0004.txt', 'SUC03', 'CENTRAL');
+
+-- b) el cliente queda con la version 3 y el lote viejo sale OMITIDO o DESCARTADO
+SELECT nombreCliente, versionCliente FROM CLIENTE WHERE idSucursalOrigen = 3 AND idClienteLocal = 1;
+
+SELECT contraparteBitacora, direccionBitacora, tablaAfectadaBitacora, resultadoBitacora FROM BITACORA_SYNC ORDER BY idBitacora DESC;
+
+------------------------------------------------------------
 -- 7. VOLVER A ACTIVAR LA SINCRONIZACION AUTOMATICA
 ------------------------------------------------------------
 EXEC DBMS_SCHEDULER.ENABLE('JOB_SYNC_SUC01');
