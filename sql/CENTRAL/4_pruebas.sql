@@ -79,7 +79,10 @@ WHERE p.idProducto = 2;
 SELECT contraparteBitacora, direccionBitacora, tablaAfectadaBitacora, resultadoBitacora FROM BITACORA_SYNC
 WHERE tablaAfectadaBitacora = 'PRODUCTO' ORDER BY idBitacora DESC;
 
--- e) la central, que es la duena del catalogo, vuelve a fijar el precio: su fecha es la mas reciente y los tres nodos quedan iguales
+-- e) la central, que es la duena del catalogo, vuelve a fijar el precio y los tres nodos quedan iguales
+--    Antes, comprobar que horaCentral sea mayor que fechaSuc01 (pasado el minuto del paso b); si no, esperar y volver a consultar
+SELECT SYSDATE AS horaCentral, fechaModificacionProducto AS fechaSuc01 FROM PRODUCTO@LNK_SUC01 WHERE idProducto = 2;
+
 EXEC SP_CAMBIAR_PRECIO(2, 390000);
 EXEC SP_CICLO_SYNC('SUC01');
 EXEC SP_CICLO_SYNC('SUC02');
