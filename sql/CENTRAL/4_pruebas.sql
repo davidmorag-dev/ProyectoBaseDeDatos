@@ -79,6 +79,16 @@ WHERE p.idProducto = 2;
 SELECT contraparteBitacora, direccionBitacora, tablaAfectadaBitacora, resultadoBitacora FROM BITACORA_SYNC
 WHERE tablaAfectadaBitacora = 'PRODUCTO' ORDER BY idBitacora DESC;
 
+-- e) la central, que es la duena del catalogo, vuelve a fijar el precio: su fecha es la mas reciente y los tres nodos quedan iguales
+EXEC SP_CAMBIAR_PRECIO(2, 390000);
+EXEC SP_CICLO_SYNC('SUC01');
+EXEC SP_CICLO_SYNC('SUC02');
+SELECT p.idProducto, p.precioActualProducto AS central, s1.precioActualProducto AS suc01, s2.precioActualProducto AS suc02
+FROM PRODUCTO p
+JOIN PRODUCTO@LNK_SUC01 s1 ON s1.idProducto = p.idProducto
+JOIN PRODUCTO@LNK_SUC02 s2 ON s2.idProducto = p.idProducto
+WHERE p.idProducto = 2;
+
 ------------------------------------------------------------
 -- PRUEBA 5. REGISTROS RECHAZADOS: Oracle no deja datos a medias
 ------------------------------------------------------------
