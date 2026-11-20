@@ -30,6 +30,9 @@ SELECT (SELECT COUNT(*) FROM CLIENTE) AS clientes, (SELECT COUNT(*) FROM FACTURA
 EXEC SP_CICLO_SYNC('SUC02');
 
 -- c) SUC02 debe estar SIN_CONEXION y la bitacora debe tener una fila ERROR
+-- el enlace no responde: debe dar ORA-12170 (timeout) u otro error de red
+SELECT 1 FROM DUAL@LNK_SUC02;
+
 SELECT codigoSucursal, estadoConexionSucursal, fechaUltimaSyncSucursal FROM SUCURSAL;
 SELECT contraparteBitacora, direccionBitacora, tablaAfectadaBitacora, resultadoBitacora FROM BITACORA_SYNC
 WHERE resultadoBitacora = 'ERROR' ORDER BY idBitacora DESC;
