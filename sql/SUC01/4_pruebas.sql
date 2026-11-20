@@ -68,3 +68,20 @@ SELECT idClienteLocal, nombreCliente, versionCliente FROM CLIENTE WHERE idSucurs
 EXEC SP_RETIRAR_BLOQUE(1);
 SELECT idRango, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango FROM RANGO_FACTURA ORDER BY idRango;
 -- despues del ciclo de la central llega el bloque nuevo
+
+------------------------------------------------------------
+-- PRUEBA 6. ENVIO REPETIDO: un envio ya aplicado vuelve a viajar y la central no lo duplica
+------------------------------------------------------------
+-- a) EN CENTRAL: conteos antes (CENTRAL/4_pruebas.sql, prueba 1, el primer SELECT)
+-- b) aqui: la primera factura ya APLICADA se vuelve a poner PENDIENTE
+UPDATE SYNC_SALIDA SET estadoSalida = 'PENDIENTE'
+WHERE idSalida = (SELECT MIN(idSalida) FROM SYNC_SALIDA WHERE tablaOrigenSalida = 'FACTURA');
+COMMIT;
+
+SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY tablaOrigenSalida, estadoSalida;
+
+-- c) EN CENTRAL: ciclo de esta sucursal; los conteos no cambian y la bitacora marca OMITIDO
+--    EXEC SP_CICLO_SYNC('SUC01');
+--    SELECT contraparteBitacora, direccionBitacora, tablaAfectadaBitacora, resultadoBitacora FROM BITACORA_SYNC ORDER BY idBitacora DESC;
+-- d) aqui: el envio vuelve a quedar APLICADO
+SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY tablaOrigenSalida, estadoSalida;
