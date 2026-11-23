@@ -60,6 +60,10 @@ SELECT COUNT(*) AS facturas FROM FACTURA;
 EXEC SP_GUARDAR_CLIENTE(2, 2, 'CEDULA', '404440444', 'Cliente Modificado SUC02');
 SELECT idClienteLocal, nombreCliente, versionCliente FROM CLIENTE WHERE idSucursalOrigen = 2 ORDER BY idClienteLocal;
 -- despues del ciclo de la central, en la otra sucursal y en la central se ve el nombre nuevo con la version 2
+-- todos los clientes que tiene esta sucursal (propios y recibidos) con su origen; las dos Marias salen juntas
+SELECT s.codigoSucursal AS origen, c.idClienteLocal, c.numeroIdentificacionCliente AS cedula, c.nombreCliente, c.versionCliente
+FROM CLIENTE c JOIN SUCURSAL s ON s.idSucursal = c.idSucursalOrigen
+ORDER BY c.nombreCliente, s.codigoSucursal;
 
 ------------------------------------------------------------
 -- PRUEBA 5. RECUPERAR LA NUMERACION TRAS RESTAURAR UNA COPIA VIEJA

@@ -21,6 +21,10 @@ EXEC SP_CICLO_SYNC('SUC02');
 -- conteos despues (deben ser iguales a los de antes)
 SELECT (SELECT COUNT(*) FROM CLIENTE) AS clientes, (SELECT COUNT(*) FROM FACTURA) AS facturas,
     (SELECT COUNT(*) FROM SYNC_RECIBIDO) AS recibidos, (SELECT COUNT(*) FROM BITACORA_SYNC) AS bitacora FROM DUAL;
+-- todos los clientes de la central con su sucursal de origen; las dos Marias salen juntas y ninguno repetido
+SELECT s.codigoSucursal AS origen, c.idClienteLocal, c.numeroIdentificacionCliente AS cedula, c.nombreCliente, c.versionCliente
+FROM CLIENTE c JOIN SUCURSAL s ON s.idSucursal = c.idSucursalOrigen
+ORDER BY c.nombreCliente, s.codigoSucursal;
 
 ------------------------------------------------------------
 -- PRUEBA 2. NODO CAIDO: una sucursal no responde y la otra sigue

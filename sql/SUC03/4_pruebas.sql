@@ -32,6 +32,10 @@ SELECT COUNT(*) AS facturas FROM FACTURA;
 ------------------------------------------------------------
 EXEC SP_GUARDAR_CLIENTE(3, 2, 'CEDULA', '707770777', 'Cliente Modificado SUC03');
 SELECT idClienteLocal, nombreCliente, versionCliente FROM CLIENTE WHERE idSucursalOrigen = 3 ORDER BY idClienteLocal;
+-- todos los clientes que tiene esta sucursal (propios y recibidos en la respuesta de la central) con su origen
+SELECT s.codigoSucursal AS origen, c.idClienteLocal, c.numeroIdentificacionCliente AS cedula, c.nombreCliente, c.versionCliente
+FROM CLIENTE c JOIN SUCURSAL s ON s.idSucursal = c.idSucursalOrigen
+ORDER BY c.nombreCliente, s.codigoSucursal;
 
 ------------------------------------------------------------
 -- PRUEBA 4. LOTE QUE LLEGA ALTERADO: la central lo rechaza completo
