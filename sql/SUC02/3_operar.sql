@@ -54,4 +54,5 @@ SELECT idProducto, precioActualProducto FROM PRODUCTO ORDER BY idProducto;
 
 SELECT COUNT(*) FROM FACTURA;
 
-
+----------------------------------------------------------------------------------------------------
+SELECT * FROM CLIENTE WHERE idSucursalOrigen = 1 AND idClienteLocal = 1;
