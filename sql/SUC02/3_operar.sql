@@ -8,7 +8,7 @@ SET SERVEROUTPUT ON
 -- 1. objetos con errores (no debe devolver filas) [se puede repetir]
 SELECT object_name, object_type, status FROM user_objects WHERE status <> 'VALID';
 
--- 2. datos iniciales [se puede repetir]
+-- 2. datos iniciales [se puede repetir] SUMAS
 SELECT 'PRODUCTO' AS tabla, COUNT(*) AS filas FROM PRODUCTO
 UNION ALL SELECT 'CLIENTE', COUNT(*) FROM CLIENTE
 UNION ALL SELECT 'FACTURA', COUNT(*) FROM FACTURA;
@@ -36,6 +36,7 @@ PRINT idFactura
 -- 5. facturas emitidas y envios pendientes hacia la central [se puede repetir]
 SELECT idFactura, idClienteLocal, totalFactura FROM FACTURA ORDER BY idFactura;
 
+--- Estado de salida de los clientes PENDIENTE/APLICADO
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY tablaOrigenSalida, estadoSalida;
 
 -- 6. guardar un cliente nuevo (queda pendiente para la central) [una sola vez] (repetirlo sube la version del cliente)
@@ -43,6 +44,7 @@ EXEC SP_GUARDAR_CLIENTE(2, 4, 'CEDULA', '808880888', 'Pedro Quesada Mora');
 
 ------------------------------------------------------------
 -- PARTE C. DESPUES DEL CICLO DE LA CENTRAL (envios APLICADO y lo que se recibio)
+
 ------------------------------------------------------------
 -- 7. despues del ciclo de la central: los envios deben salir APLICADO [se puede repetir]
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY tablaOrigenSalida, estadoSalida;
@@ -50,6 +52,7 @@ SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GR
 -- 8. lo que la central entrego a esta sucursal [se puede repetir]
 SELECT origenRecibido, resultadoRecibido, COUNT(*) AS cantidad FROM SYNC_RECIBIDO GROUP BY origenRecibido, resultadoRecibido;
 
+-- Muestra precios actuales de los productos
 SELECT idProducto, precioActualProducto FROM PRODUCTO ORDER BY idProducto;
 
 SELECT COUNT(*) FROM FACTURA;

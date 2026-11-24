@@ -95,7 +95,9 @@ SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GR
 ------------------------------------------------------------
 -- a) EN CENTRAL: EXEC SP_CAMBIAR_PRECIO(2, 390000);
 -- b) aqui, antes del ciclo: se cambia el mismo producto con una fecha un minuto despues
-UPDATE PRODUCTO SET precioActualProducto = 410000, fechaModificacionProducto = SYSDATE + 1/1440 WHERE idProducto = 2;
+UPDATE PRODUCTO SET precioActualProducto = 400000,
+    fechaModificacionProducto = TO_DATE('24/11/2026 15:30:00', 'DD/MM/YYYY HH24:MI:SS')
+WHERE idProducto = 2;
 COMMIT;
 
 SELECT idProducto, precioActualProducto, fechaModificacionProducto FROM PRODUCTO WHERE idProducto = 2;
