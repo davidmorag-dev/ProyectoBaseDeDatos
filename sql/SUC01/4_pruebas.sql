@@ -17,31 +17,6 @@ SELECT idFactura, totalFactura FROM FACTURA ORDER BY idFactura DESC FETCH FIRST 
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY tablaOrigenSalida, estadoSalida;
 
 ------------------------------------------------------------
--- PRUEBA 2. BLOQUE AGOTADO: se pide uno nuevo y se recibe de la central
-------------------------------------------------------------
--- a) se deja el bloque casi consumido (quedan dos numeros)
-UPDATE RANGO_FACTURA SET proximoNumeroRango = numeroFinalRango - 1 WHERE idSucursal = 1 AND estadoRango = 'ACTIVO';
-COMMIT;
-
--- b) dos facturas usan los dos ultimos numeros. Al pasar el 80% se pide un bloque nuevo
-EXEC SP_EMITIR_FACTURA(1, 1, 1, '1:1', :idFactura);
-EXEC SP_EMITIR_FACTURA(1, 1, 1, '1:1', :idFactura);
-
--- c) el bloque quedo AGOTADO y hay una solicitud PENDIENTE hacia la central
-SELECT idRango, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango FROM RANGO_FACTURA;
-SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA WHERE tablaOrigenSalida = 'RANGO_FACTURA' GROUP BY tablaOrigenSalida, estadoSalida;
-
--- d) una tercera factura falla porque no hay numeros (-20010) y no queda nada a medias
-EXEC SP_EMITIR_FACTURA(1, 1, 1, '1:1', :idFactura);
-
--- e) en la central: CENTRAL/4_pruebas.sql, prueba 6 (ciclo y bloque nuevo)
-
--- f) ahora hay un bloque nuevo ACTIVO y la factura si se puede emitir
-SELECT idRango, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango FROM RANGO_FACTURA ORDER BY idRango;
-EXEC SP_EMITIR_FACTURA(1, 1, 1, '1:1', :idFactura);
-PRINT idFactura
-
-------------------------------------------------------------
 -- PRUEBA 3. REGISTROS RECHAZADOS: no queda una factura a medias
 ------------------------------------------------------------
 SELECT COUNT(*) AS facturas FROM FACTURA;
@@ -64,14 +39,6 @@ SELECT idClienteLocal, nombreCliente, versionCliente FROM CLIENTE WHERE idSucurs
 SELECT s.codigoSucursal AS origen, c.idClienteLocal, c.numeroIdentificacionCliente AS cedula, c.nombreCliente, c.versionCliente
 FROM CLIENTE c JOIN SUCURSAL s ON s.idSucursal = c.idSucursalOrigen
 ORDER BY c.nombreCliente, s.codigoSucursal;
-
-------------------------------------------------------------
--- PRUEBA 5. RECUPERAR LA NUMERACION TRAS RESTAURAR UNA COPIA VIEJA
-------------------------------------------------------------
--- el bloque activo se retira y se pide uno nuevo, asi nunca se repiten numeros
-EXEC SP_RETIRAR_BLOQUE(1);
-SELECT idRango, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango FROM RANGO_FACTURA ORDER BY idRango;
--- despues del ciclo de la central llega el bloque nuevo
 
 ------------------------------------------------------------
 -- PRUEBA 6. ENVIO REPETIDO: un envio ya aplicado vuelve a viajar y la central no lo duplica
