@@ -110,13 +110,6 @@ SELECT idProducto, precioActualProducto FROM PRODUCTO WHERE idProducto = 1;
 SELECT COUNT(*) AS clientes FROM CLIENTE;
 
 ------------------------------------------------------------
--- PRUEBA 6. BLOQUE AGOTADO: la central entrega un bloque nuevo
-------------------------------------------------------------
--- La sucursal agota su bloque y pide otro (4_pruebas.sql de la sucursal, prueba 2). Aqui se ve la solicitud
-EXEC SP_CICLO_SYNC('SUC01');
-SELECT idRango, idSucursal, numeroInicialRango, numeroFinalRango, proximoNumeroRango, estadoRango FROM RANGO_FACTURA ORDER BY idRango;
-
-------------------------------------------------------------
 -- PRUEBA 7. CAMBIOS FUERA DE ORDEN (SUC03): la version mas nueva se conserva aunque el lote viejo llegue despues
 ------------------------------------------------------------
 -- SUC03 genera dos lotes con el mismo cliente (SUC03/4_pruebas.sql, prueba 7). Cambiar los numeros por los que lleguen a C:\sync
@@ -135,3 +128,13 @@ SELECT contraparteBitacora, direccionBitacora, tablaAfectadaBitacora, resultadoB
 ------------------------------------------------------------
 EXEC DBMS_SCHEDULER.ENABLE('JOB_SYNC_SUC01');
 EXEC DBMS_SCHEDULER.ENABLE('JOB_SYNC_SUC02');
+
+
+---------------------------------------------------------------------------------------
+SELECT 'PRODUCTO' AS tabla, COUNT(*) AS filas FROM PRODUCTO
+UNION ALL SELECT 'CLIENTE', COUNT(*) FROM CLIENTE
+UNION ALL SELECT 'CLIENTE_EQUIVALENCIA', COUNT(*) FROM CLIENTE_EQUIVALENCIA
+UNION ALL SELECT 'FACTURA', COUNT(*) FROM FACTURA
+UNION ALL SELECT 'DETALLE_FACTURA', COUNT(*) FROM DETALLE_FACTURA
+UNION ALL SELECT 'SYNC_RECIBIDO', COUNT(*) FROM SYNC_RECIBIDO
+UNION ALL SELECT 'BITACORA_SYNC', COUNT(*) FROM BITACORA_SYNC;
