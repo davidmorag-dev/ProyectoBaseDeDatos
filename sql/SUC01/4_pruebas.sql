@@ -89,3 +89,22 @@ SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GR
 --    SELECT contraparteBitacora, direccionBitacora, tablaAfectadaBitacora, resultadoBitacora FROM BITACORA_SYNC ORDER BY idBitacora DESC;
 -- d) aqui: el envio vuelve a quedar APLICADO
 SELECT tablaOrigenSalida, estadoSalida, COUNT(*) AS cantidad FROM SYNC_SALIDA GROUP BY tablaOrigenSalida, estadoSalida;
+
+------------------------------------------------------------
+-- PRUEBA 7. CONFLICTO DE CATALOGO: gana el cambio mas reciente (va con CENTRAL/4_pruebas.sql, prueba 4)
+------------------------------------------------------------
+-- a) EN CENTRAL: EXEC SP_CAMBIAR_PRECIO(2, 390000);
+-- b) aqui, antes del ciclo: se cambia el mismo producto con una fecha un minuto despues
+UPDATE PRODUCTO SET precioActualProducto = 400000, fechaModificacionProducto = SYSDATE + 1/1440 WHERE idProducto = 2;
+COMMIT;
+
+SELECT idProducto, precioActualProducto, fechaModificacionProducto FROM PRODUCTO WHERE idProducto = 2;
+
+-- c) EN CENTRAL: ciclo de esta sucursal (prueba 4, pasos c y d)
+-- d) aqui: el precio sigue en 400000 porque su fecha es mas reciente; el cambio de la central llego DESCARTADO
+SELECT idProducto, precioActualProducto, fechaModificacionProducto FROM PRODUCTO WHERE idProducto = 2;
+
+SELECT origenRecibido, idEnvioRecibido, resultadoRecibido FROM SYNC_RECIBIDO WHERE origenRecibido = 'CENTRAL' ORDER BY idEnvioRecibido DESC;
+
+-- e) EN CENTRAL: pasado el minuto, la central vuelve a fijar el precio (prueba 4, paso e). Aqui ya debe salir 390000
+SELECT idProducto, precioActualProducto, fechaModificacionProducto FROM PRODUCTO WHERE idProducto = 2;
